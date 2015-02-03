@@ -6,7 +6,7 @@ harbor = 0
 start = "main"	-- main script
 bootstrap = "snlua bootstrap"	-- The service for bootstrap
 
-lua_path = skynet_root.."lualib/?.lua"
+lua_path = skynet_root.."lualib/?.lua;"..root.."?.lua"
 lua_cpath = skynet_root.."luaclib/?.so"
 cpath = skynet_root.."cservice/?.so"
 luaservice = skynet_root.."service/?.lua;"..root.."?.lua"
