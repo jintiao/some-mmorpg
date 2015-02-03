@@ -1,0 +1,14 @@
+skynet_root = "../3rd/skynet/"
+root = "./"
+thread = 8
+logger = nil
+harbor = 0
+start = "main"	-- main script
+bootstrap = "snlua bootstrap"	-- The service for bootstrap
+
+lua_path = skynet_root.."lualib/?.lua"
+lua_cpath = skynet_root.."luaclib/?.so"
+cpath = skynet_root.."cservice/?.so"
+luaservice = skynet_root.."service/?.lua;"..root.."?.lua"
+lualoader = skynet_root.."lualib/loader.lua"
+snax = skynet_root.."?.lua;"
