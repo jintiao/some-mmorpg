@@ -5,6 +5,9 @@ function gateserver.start (handler)
 	local CMD = {}
 
 	function CMD.open (source, conf)
+		if handler.open then
+			return handler.open (source, conf)
+		end
 	end
 
 	skynet.start (function ()
