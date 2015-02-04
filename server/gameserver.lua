@@ -1,4 +1,7 @@
 local gateserver = require "gateserver"
+local skynet = require "skynet"
+local logger = require "logger"
+
 local gameserver = {}
 
 function gameserver.start (gamed)
