@@ -1,0 +1,19 @@
+#!/bin/bash
+
+BASEDIR=$(dirname $0)
+TARGET="${BASEDIR}/../../var"
+
+echo "running setup..."
+echo "target folder : ${TARGET}"
+
+if [ ! -d "${TARGET}" ]
+then
+	mkdir $TARGET
+fi
+
+${BASEDIR}/redis/setup ${TARGET}
+
+cp ${BASEDIR}/script/* ${TARGET}
+
+echo "setup finished."
+
