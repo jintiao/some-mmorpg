@@ -25,7 +25,7 @@ function logind.command_handler (cmd, addr, ...)
 end
 
 function logind.connection_handler (fd, addr)
-	skynet.timeout (1000, function ()
+	skynet.timeout (300, function ()
 		loginserver.kick (fd)
 	end)
 end

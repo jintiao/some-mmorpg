@@ -5,35 +5,35 @@ local sproto = require "sproto"
 local login_proto = require "login_proto"
 
 local loginserver = {}
-
-local connection_handler
-local auth_handler
-local command_handler
-
 local slave = {}
 local connection = {}
 
-local host = sproto.new (login_proto.c2s):host "package"
-local send_request = host:attach (sproto.new (login_proto.s2c))
-
-local function read (fd, size)
-	return socket.read (fd, size) or error ()
-end
-
-local function read_msg (fd)
-	local s = read (fd, 2)
-	local size = s:byte(1) * 256 + s:byte(2)
-	logger.debug (string.format ("read_msg size : %d", size))
-	local msg = read (fd, size)
-	return host:dispatch (msg, size)
-end
-
+local command_handler
+local connection_handler
+local auth_handler
+	
 local function close (fd)
 	socket.close (fd)
 	connection[fd] = nil
 end
 
+
 local function launch_slave ()
+	local host = sproto.new (login_proto.c2s):host "package"
+	local send_request = host:attach (sproto.new (login_proto.s2c))
+
+	local function read (fd, size)
+		return socket.read (fd, size) or error ()
+	end
+
+	local function read_msg (fd)
+		local s = read (fd, 2)
+		local size = s:byte(1) * 256 + s:byte(2)
+		logger.debug (string.format ("read_msg size : %d", size))
+		local msg = read (fd, size)
+		return host:dispatch (msg, size)
+	end
+
 	local function auth (fd, addr)
 		fd = assert (tonumber (fd))
 		connection[fd] = addr
@@ -47,28 +47,20 @@ local function launch_slave ()
 		assert (type == "REQUEST")
 		assert (name == "handshake")
 		assert (args.name)
-		assert (args.client_pub)
+--		assert (args.client_pub)
 
 		type, name, args, response = read_msg (fd)
 
 		auth_handler ()
 	end
 
-	local function retpack (fd, ...)
+	skynet.dispatch ("lua", function (_, _, fd, addr)
+		if not pcall (auth, fd, addr) then
+			logger.log (string.format ("connection %s (fd = %d) auth failed!", addr, fd))
+		end
 		close (fd)
-		skynet.retpack (...)
-	end
-
-	skynet.dispatch ("lua", function (_, _, fd, ...)
-		retpack (fd, pcall (auth, fd, ...))
+		skynet.ret ()
 	end)
-end
-
-local function accept (s, fd, addr)
-	local ok, err = skynet.call (s, "lua", fd, addr)
-	if not ok then
-		logger.log (string.format ("auth failed! connection %s (fd = %d)", addr, fd))
-	end
 end
 
 local function launch_master (ninstance)
@@ -94,7 +86,7 @@ function loginserver.open (conf)
 		if balance > nslave then
 			balance = 1
 		end
-		accept (s, fd, addr)
+		skynet.call (s, "lua", fd, addr)
 	end)
 end
 
