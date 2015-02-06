@@ -2,7 +2,11 @@ local skynet = require "skynet"
 local socket = require "socket"
 local logger = require "logger"
 local sproto = require "sproto"
+local srp = require "srp"
+local aes = require "aes"
 local login_proto = require "login_proto"
+local config = require "config"
+local constant = require "constant"
 
 local loginserver = {}
 local slave = {}
@@ -21,6 +25,7 @@ end
 local function launch_slave ()
 	local host = sproto.new (login_proto.c2s):host "package"
 	local send_request = host:attach (sproto.new (login_proto.s2c))
+	local database = config.database
 
 	local function read (fd, size)
 		return socket.read (fd, size) or error ()
@@ -29,9 +34,13 @@ local function launch_slave ()
 	local function read_msg (fd)
 		local s = read (fd, 2)
 		local size = s:byte(1) * 256 + s:byte(2)
-		logger.debug (string.format ("read_msg size : %d", size))
 		local msg = read (fd, size)
 		return host:dispatch (msg, size)
+	end
+
+	local function send_msg (fd, msg)
+		local package = string.pack (">s2", msg)
+		socket.write (fd, package)
 	end
 
 	local function auth (fd, addr)
@@ -46,8 +55,19 @@ local function launch_slave ()
 		local type, name, args, response = read_msg (fd)
 		assert (type == "REQUEST")
 		assert (name == "handshake")
+		assert (args)
 		assert (args.name)
---		assert (args.client_pub)
+		assert (args.client_pub)
+		assert (response)
+
+		local account = skynet.call (database, "lua", "load", args.name)
+		assert (account)
+		local session_key, _, pub = srp.create_server_session_key (account.verifier, args.client_pub)
+		local ret = { salt = account.salt, server_pub = pub }
+		if not account.id then
+			ret.errno = constant.USER_NOT_EXIST
+		end
+		send_msg (fd, response (ret))
 
 		type, name, args, response = read_msg (fd)
 
@@ -55,7 +75,8 @@ local function launch_slave ()
 	end
 
 	skynet.dispatch ("lua", function (_, _, fd, addr)
-		if not pcall (auth, fd, addr) then
+--		if not pcall (auth, fd, addr) then
+		if not auth (fd, addr) then
 			logger.log (string.format ("connection %s (fd = %d) auth failed!", addr, fd))
 		end
 		close (fd)
