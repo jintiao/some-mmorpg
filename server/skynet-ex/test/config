@@ -1,0 +1,19 @@
+-- skynet config
+thread = 4
+logger = nil
+harbor = 0
+start = "main"
+bootstrap = "snlua bootstrap"
+skynet_root = "../../3rd/skynet/"
+server_root = "./"
+common_root = "../"
+lualoader = skynet_root.."lualib/loader.lua"
+lua_path = skynet_root.."lualib/?.lua;"..server_root.."?.lua;"..common_root.."?.lua;"..common_root.."skynet-ex/test/?.lua"
+lua_cpath = skynet_root.."luaclib/?.so;"..common_root.."skynet-ex/luaclib/?.so"
+luaservice = skynet_root.."service/?.lua;"..server_root.."test/?.lua"
+cpath = skynet_root.."cservice/?.so"
+
+-- game config
+watchdog_port = 8888
+account_services = 4
+
