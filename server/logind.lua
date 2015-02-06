@@ -6,13 +6,10 @@ local config = require "config"
 local logind = {}
 local gamed = {}
 
-function logind.auth_handler ()
-end
-
 local CMD = {}
 
 function CMD.register (name, source)
-	logger.log ("register gamed", source, name)
+	logger.log (string.format ("register %s at %d", name, source))
 	gamed[source] = name
 end
 
@@ -25,6 +22,15 @@ function logind.command_handler (cmd, addr, ...)
 	if f then
 		f (addr, ...)
 	end
+end
+
+function logind.connection_handler (fd, addr)
+	skynet.timeout (1000, function ()
+		loginserver.kick (fd)
+	end)
+end
+
+function logind.auth_handler ()
 end
 
 loginserver.start (logind, config.logind)

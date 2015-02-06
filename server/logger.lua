@@ -1,4 +1,8 @@
+local config = require "config"
+
 local logger = {}
+
+local level = tonumber (config.log_level) or 1
 
 local function write (...)
 	local t = {...}
@@ -6,19 +10,27 @@ local function write (...)
 end
 
 function logger.debug (...)
-	write (dstr, ...)
+	if level <= 1 then 
+		write (dstr, ...)
+	end
 end
 
 function logger.log (...)
-	write (lstr, ...)
+	if level <= 2 then 
+		write (lstr, ...)
+	end
 end
 
 function logger.warning (...)
-	write (wstr, ...)
+	if level <= 3 then 
+		write (wstr, ...)
+	end
 end
 
 function logger.error (...)
-	write (estr, ...)
+	if level <= 4 then 
+		write (estr, ...)
+	end
 end
 
 function logger.register (name)
