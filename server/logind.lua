@@ -31,7 +31,7 @@ function logind.connection_handler (fd, addr)
 end
 
 function logind.auth_handler ()
-	skynet.wait ()
+	print ("auth pass")
 end
 
 loginserver.start (logind, config.logind)

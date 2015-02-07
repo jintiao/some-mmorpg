@@ -20,27 +20,14 @@ handshake 1 {
 	}
 }
 
-register 2 {
+login 2 {
 	request {
 		name 0 : string
 		password 1 : string
 	}
 	response {
-		errno 0 : integer
-		id 1 : integer
-		token 2 : string
-	}
-}
-
-login 3 {
-	request {
-		name 0 : string
-		password 1 : string
-	}
-	response {
-		errno 0 : integer
-		id 1 : integer
-		token 2 : string
+		account 0 : integer
+		token 1 : string
 	}
 }
 

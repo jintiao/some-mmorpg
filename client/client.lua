@@ -6,9 +6,12 @@ local sproto = require "sproto"
 local srp = require "srp"
 local aes = require "aes"
 local login_proto = require "login_proto"
+local constant = require "constant"
 
 local host = sproto.new (login_proto.s2c):host "package"
 local request = host:attach (sproto.new (login_proto.c2s))
+
+local user = {}
 
 local fd = assert (socket.connect ("127.0.0.1", 9777))
 
@@ -17,11 +20,13 @@ local function send_message (fd, msg)
 	socket.send (fd, package)
 end
 
-local session = 0
+local session = {}
+local session_id = 0
 local function send_request (name, args)
-	session = session + 1
-	local str = request (name, args, session)
+	session_id = session_id + 1
+	local str = request (name, args, session_id)
 	send_message (fd, str)
+	session[session_id] = { name = name, args = args }
 end
 
 local function unpack (text)
@@ -64,14 +69,31 @@ local function handle_request (name, args)
 	end
 end
 
-local function handle_response (session, args)
-	print ("response", session)
+local RESPONSE = {}
 
-	if args then
-		for k, v in pairs (args) do
-			print (k, v)
-		end
+function RESPONSE.handshake (request, args)
+	print ("RESPONSE.handshake")
+	local name = request.name
+	assert (name == user.name)
+
+	if args.errno == constant.USER_NOT_EXIST then
+		print (name, constant.default_password)
+		local key = srp.create_client_session_key (name, constant.default_password, args.salt, user.private_key, user.public_key, args.server_pub)
+		local ret = { name = aes.encrypt (name, key), password = aes.encrypt (user.password, key) }
+
+		send_request ("login", ret)
+	else
+		local key = srp.create_client_session_key (name, user.password)
+		local ret = { name = aes.encrypt (name, key) }
+		send_request ("login", ret)
 	end
+end
+
+local function handle_response (id, args)
+	local s = assert (session[id])
+	session[id] = nil
+	local f = assert (RESPONSE[s.name])
+	f (s.args, args)
 end
 
 local function handle_message (t, ...)
@@ -96,7 +118,8 @@ local function dispatch_message ()
 end
 
 local private_key, public_key = srp.create_client_key ()
-send_request ("handshake", { name = "jintiao", client_pub = public_key })
+user = { name = "jintiao", password = "scut", private_key = private_key, public_key = public_key }
+send_request ("handshake", { name = user.name, client_pub = public_key })
 
 while true do
 	dispatch_message ()

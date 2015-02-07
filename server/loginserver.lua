@@ -70,13 +70,20 @@ local function launch_slave ()
 		send_msg (fd, response (ret))
 
 		type, name, args, response = read_msg (fd)
+		assert (type == "REQUEST")
+		assert (name == "login")
+		assert (args)
+		assert (args.name)
+		assert (response)
+
+		local realname = aes.decrypt (args.name, session_key)
+		assert (realname == account.name)
 
 		auth_handler ()
 	end
 
 	skynet.dispatch ("lua", function (_, _, fd, addr)
---		if not pcall (auth, fd, addr) then
-		if not auth (fd, addr) then
+		if not pcall (auth, fd, addr) then
 			logger.log (string.format ("connection %s (fd = %d) auth failed!", addr, fd))
 		end
 		close (fd)
