@@ -63,10 +63,7 @@ local function launch_slave ()
 		local account = skynet.call (database, "lua", "load", args.name)
 		assert (account)
 		local session_key, _, pub = srp.create_server_session_key (account.verifier, args.client_pub)
-		local ret = { salt = account.salt, server_pub = pub }
-		if not account.id then
-			ret.errno = constant.USER_NOT_EXIST
-		end
+		local ret = { user_exists = (account.id ~= nil),salt = account.salt, server_pub = pub }
 		send_msg (fd, response (ret))
 
 		type, name, args, response = read_msg (fd)
@@ -78,8 +75,16 @@ local function launch_slave ()
 
 		local realname = aes.decrypt (args.name, session_key)
 		assert (realname == account.name)
-
-		auth_handler ()
+		
+		local id = account.id
+		if not id then
+			assert (args.password)
+			local password = aes.decrypt (args.password, session_key)
+			id = skynet.call (database, "lua", "create", realname, password)
+		end
+		assert (id)
+		token = auth_handler (id, session_key)
+		send_msg (fd, response ({ account = id, token = token }))
 	end
 
 	skynet.dispatch ("lua", function (_, _, fd, addr)

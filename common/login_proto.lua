@@ -14,7 +14,7 @@ handshake 1 {
 		client_pub 1 : string
 	}
 	response {
-		errno 0 : integer
+		user_exists 0 : boolean
 		salt 1 : string
 		server_pub 2 : string
 	}

@@ -71,22 +71,27 @@ end
 
 local RESPONSE = {}
 
-function RESPONSE.handshake (request, args)
+function RESPONSE:handshake (args)
 	print ("RESPONSE.handshake")
-	local name = request.name
+	local name = self.name
 	assert (name == user.name)
 
-	if args.errno == constant.USER_NOT_EXIST then
+	if args.user_exists then
+		local key = srp.create_client_session_key (name, user.password, args.salt, user.private_key, user.public_key, args.server_pub)
+		local ret = { name = aes.encrypt (name, key) }
+		send_request ("login", ret)
+	else
 		print (name, constant.default_password)
 		local key = srp.create_client_session_key (name, constant.default_password, args.salt, user.private_key, user.public_key, args.server_pub)
 		local ret = { name = aes.encrypt (name, key), password = aes.encrypt (user.password, key) }
 
 		send_request ("login", ret)
-	else
-		local key = srp.create_client_session_key (name, user.password)
-		local ret = { name = aes.encrypt (name, key) }
-		send_request ("login", ret)
 	end
+end
+
+function RESPONSE:login (args)
+	print ("RESPONSE.login")
+	print (args.account, args.token)
 end
 
 local function handle_response (id, args)

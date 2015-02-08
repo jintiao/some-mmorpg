@@ -34,16 +34,29 @@ function connection_handler (key)
 	return group[hash % ngroup + 1]
 end
 
+function id_handler ()
+	return center:incr ("naccount")
+end
+
 local CMD = {}
 
 function CMD.load (name)
 	return account.load (name)
 end
 
+function CMD.create (name, password)
+	local ok, err = pcall (account.create, name, password)
+	if not ok then
+		return
+	else
+		return err
+	end
+end
+
 skynet.start (function ()
 	skynet.register (config.database)
 
-	account.connection_handler = connection_handler
+	account.init (connection_handler, id_handler)
 
 	center = redis.connect (database_config.center)
 	ngroup = #database_config.group

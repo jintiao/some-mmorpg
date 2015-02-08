@@ -2,20 +2,17 @@ local constant = require "constant"
 local srp = require "srp"
 
 local account = {}
+local connection_handler
+local id_handler
 
-account.connection_handler = nil
+function account.init (ch, ih)
+	connection_handler = ch
+	id_handler = ih
+end
 
 local function make_user_key (name)
 	assert (name)
 	return "user:" .. name
-end
-
-local function exist_user (name)
-	assert (name)
-
-	local connection = account.connection_handler (name)
-	local key = make_user_key (name)
-	return connection.exists (key)
 end
 
 function account.load (name)
@@ -25,11 +22,10 @@ function account.load (name)
 
 	local acc = { name = name }
 
-	local connection = account.connection_handler (name)
+	local connection = connection_handler (name)
 	local key = make_user_key (name)
-
 	if connection:exists (key) then
-		acc.id = connection:hget (key, "id")
+		acc.id = connection:hget (key, "account")
 		acc.salt = connection:hget (key, "salt")
 		acc.verifier = connection:hget (key, "verifier")
 	else
@@ -37,6 +33,21 @@ function account.load (name)
 	end
 
 	return acc
+end
+
+function account.create (name, password)
+	local id = id_handler ()
+	local connection = connection_handler (name)
+	local key = make_user_key (name)
+	assert (connection:hsetnx (key, "account", id) ~= 0) 
+
+	local salt, verifier = srp.create_verifier (name, password)
+	assert (connection:hmset (key, "salt", salt, "verifier", verifier) ~= 0)
+
+	connection = connection_handler (id)
+	assert (connection:sadd ("account:" .. id, name) ~= 0)
+
+	return id
 end
 
 return account

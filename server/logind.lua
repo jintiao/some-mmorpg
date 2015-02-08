@@ -30,8 +30,9 @@ function logind.connection_handler (fd, addr)
 	end)
 end
 
-function logind.auth_handler ()
+function logind.auth_handler (id, key)
 	print ("auth pass")
+	return "token"
 end
 
 loginserver.start (logind, config.logind)
