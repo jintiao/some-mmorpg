@@ -118,7 +118,7 @@ function gateserver.start (handler)
 			if f then
 				skynet.retpack (f(address, ...))
 			else
-				skynet.retpack (handler.command (cmd, address, ...))
+				skynet.retpack (handler.command (cmd, ...))
 			end
 		end)
 	end)

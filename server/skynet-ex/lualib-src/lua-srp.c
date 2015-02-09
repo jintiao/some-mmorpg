@@ -159,6 +159,14 @@ lcreate_client_session_key (lua_State *L) {
 	return 1;
 }
 
+static int
+lrandom (lua_State *L) {
+	BIGNUM *r = random_key ();
+	push_bn (L, r);
+	BN_free (r);
+	return 1;
+}
+
 int
 luaopen_srp (lua_State *L) {
 	luaL_checkversion (L);
@@ -167,6 +175,7 @@ luaopen_srp (lua_State *L) {
 		{ "create_client_key", lcreate_client_key },
 		{ "create_server_session_key", lcreate_server_session_key },
 		{ "create_client_session_key", lcreate_client_session_key },
+		{ "random", lrandom },
 		{ NULL, NULL },
 	};
 	luaL_newlib (L,l);

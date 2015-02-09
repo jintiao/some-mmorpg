@@ -12,9 +12,9 @@ local loginserver = {}
 local slave = {}
 local connection = {}
 
+local master
 local command_handler
 local connection_handler
-local auth_handler
 	
 local function close (fd)
 	socket.close (fd)
@@ -83,13 +83,15 @@ local function launch_slave ()
 			id = skynet.call (database, "lua", "create", realname, password)
 		end
 		assert (id)
-		token = auth_handler (id, session_key)
+
+		local token = skynet.call (master, "lua", "auth", id, session_key)
 		send_msg (fd, response ({ account = id, token = token }))
 	end
 
 	skynet.dispatch ("lua", function (_, _, fd, addr)
-		if not pcall (auth, fd, addr) then
-			logger.log (string.format ("connection %s (fd = %d) auth failed!", addr, fd))
+		local ok, err =  pcall (auth, fd, addr)
+		if not ok then
+			logger.log (string.format ("connection %s (fd = %d) auth failed! err : %s", addr, fd, err))
 		end
 		close (fd)
 		skynet.ret ()
@@ -101,7 +103,7 @@ local function launch_master (ninstance)
 		table.insert (slave, skynet.newservice (SERVICE_NAME))
 	end
 
-	skynet.dispatch ("lua", function (_, source, cmd, ...)
+	skynet.dispatch ("lua", function (_, _, cmd, ...)
 		skynet.retpack (command_handler (cmd, ...))
 	end)
 end
@@ -134,11 +136,10 @@ function loginserver.start (logind, conf)
 	local name = "." .. conf.name
 
 	skynet.start (function ()
-		local master = skynet.localname (name)
+		master = skynet.localname (name)
 		if master then
 			logger.register ("loginserver.slave")
 			connection_handler = logind.connection_handler
-			auth_handler = logind.auth_handler
 			return launch_slave ()
 		else
 			skynet.register (name)
