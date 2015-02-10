@@ -19,10 +19,10 @@ function CMD.open (conf)
 	loginserver.open (conf)
 end
 
-function CMD.auth (id, key)
+function CMD.login (id, key)
 	local token = srp.random ()
 	local secret = aes.encrypt (token, key)
-	skynet.call (gamed, "lua", "auth", id, secret)
+	skynet.call (gamed, "lua", "login", id, secret)
 	return token
 end
 

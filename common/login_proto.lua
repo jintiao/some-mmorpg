@@ -20,12 +20,19 @@ handshake 1 {
 	}
 }
 
-login 2 {
+auth 2 {
 	request {
 		name 0 : string
 		password 1 : string
 	}
 	response {
+		account 0 : integer
+		token 1 : string
+	}
+}
+
+login 3 {
+	request {
 		account 0 : integer
 		token 1 : string
 	}

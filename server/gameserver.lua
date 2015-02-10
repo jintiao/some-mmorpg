@@ -15,7 +15,7 @@ function gameserver.start (gamed)
 
 	local CMD = {}
 
-	function CMD.auth (id, secret)
+	function CMD.login (id, secret)
 		logger.log (string.format ("account %d auth finished", id)) 
 		auth[id] = secret
 	end

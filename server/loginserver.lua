@@ -68,7 +68,7 @@ local function launch_slave ()
 
 		type, name, args, response = read_msg (fd)
 		assert (type == "REQUEST")
-		assert (name == "login")
+		assert (name == "auth")
 		assert (args)
 		assert (args.name)
 		assert (response)
@@ -84,7 +84,7 @@ local function launch_slave ()
 		end
 		assert (id)
 
-		local token = skynet.call (master, "lua", "auth", id, session_key)
+		local token = skynet.call (master, "lua", "login", id, session_key)
 		send_msg (fd, response ({ account = id, token = token }))
 	end
 
