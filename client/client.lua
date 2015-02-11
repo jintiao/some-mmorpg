@@ -6,14 +6,18 @@ local sproto = require "sproto"
 local srp = require "srp"
 local aes = require "aes"
 local login_proto = require "login_proto"
+local game_proto = require "game_proto"
 local constant = require "constant"
 
 local host = sproto.new (login_proto.s2c):host "package"
 local request = host:attach (sproto.new (login_proto.c2s))
 
-local user = {}
+local user = { name = "jintiao", password = "scut" }
+local server = "127.0.0.1"
+local login_port = 9777
+local game_port = 9555
 
-local fd = assert (socket.connect ("127.0.0.1", 9777))
+local fd 
 
 local function send_message (fd, msg)
 	local package = string.pack (">s2", msg)
@@ -78,20 +82,28 @@ function RESPONSE:handshake (args)
 
 	if args.user_exists then
 		local key = srp.create_client_session_key (name, user.password, args.salt, user.private_key, user.public_key, args.server_pub)
+		user.session_key = key
 		local ret = { name = aes.encrypt (name, key) }
 		send_request ("auth", ret)
 	else
 		print (name, constant.default_password)
 		local key = srp.create_client_session_key (name, constant.default_password, args.salt, user.private_key, user.public_key, args.server_pub)
+		user.session_key = key
 		local ret = { name = aes.encrypt (name, key), password = aes.encrypt (user.password, key) }
-
 		send_request ("auth", ret)
 	end
 end
 
-function RESPONSE:login (args)
-	print ("RESPONSE.login")
-	print (args.account, args.token)
+function RESPONSE:auth (args)
+	print ("RESPONSE.auth")
+	user.account = args.account
+	local token = aes.encrypt (args.token, user.session_key)
+
+	host = sproto.new (game_proto.s2c):host "package"
+	request = host:attach (sproto.new (game_proto.c2s))
+
+	fd = assert (socket.connect (server, game_port))
+	send_request ("login", { account = args.account, token = token })
 end
 
 local function handle_response (id, args)
@@ -123,7 +135,9 @@ local function dispatch_message ()
 end
 
 local private_key, public_key = srp.create_client_key ()
-user = { name = "jintiao", password = "scut", private_key = private_key, public_key = public_key }
+user.private_key = private_key
+user.public_key = public_key 
+fd = assert (socket.connect (server, login_port))
 send_request ("handshake", { name = user.name, client_pub = public_key })
 
 while true do

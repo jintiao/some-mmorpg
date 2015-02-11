@@ -5,12 +5,22 @@ local logger = require "logger"
 local gameserver = {}
 
 local auth = {}
+local handshake = {}
 
 function gameserver.start (gamed)
 	local handler = {}
 
 	function handler.open (source, conf)
 		return gamed.open (conf.name)
+	end
+
+	function handler.connect (fd, addr)
+		handshake[fd] = addr
+		gateserver.open_client (fd)
+	end
+
+	function handler.message (fd, msg, sz)
+		print ("handler.message", fd, sz)
 	end
 
 	local CMD = {}

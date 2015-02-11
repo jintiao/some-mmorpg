@@ -8,7 +8,7 @@ local gateserver = {}
 local socket
 local queue
 local maxclient
-local nclient
+local nclient = 0
 local CMD = setmetatable ({}, { __gc = function () netpack.clear (queue) end })
 
 local connection = {}
