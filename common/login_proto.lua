@@ -31,6 +31,13 @@ auth 2 {
 	}
 }
 
+login 3 {
+	request {
+		account 0 : integer
+		token 1 : string
+	}
+}
+
 ]]
 
 login_proto.s2c = sparser.parse [[
