@@ -1,6 +1,7 @@
 local gateserver = require "gateserver"
 local skynet = require "skynet"
 local logger = require "logger"
+local login_proto = require "login_proto"
 
 local gameserver = {}
 
@@ -20,6 +21,10 @@ function gameserver.start (gamed)
 	end
 
 	function handler.message (fd, msg, sz)
+		if handshake[fd] then
+			
+		else
+		end
 		print ("handler.message", fd, sz)
 	end
 
@@ -28,6 +33,11 @@ function gameserver.start (gamed)
 	function CMD.login (id, secret)
 		logger.log (string.format ("account %d auth finished", id)) 
 		auth[id] = secret
+		skynet.timeout (10 * 100, function ()
+			if auth[id] == secret then
+				auth[id] = nil
+			end
+		end)
 	end
 
 	function handler.command (cmd, ...)

@@ -99,11 +99,11 @@ function RESPONSE:auth (args)
 	user.account = args.account
 	local token = aes.encrypt (args.token, user.session_key)
 
-	host = sproto.new (game_proto.s2c):host "package"
-	request = host:attach (sproto.new (game_proto.c2s))
-
 	fd = assert (socket.connect (server, game_port))
 	send_request ("login", { account = args.account, token = token })
+
+	host = sproto.new (game_proto.s2c):host "package"
+	request = host:attach (sproto.new (game_proto.c2s))
 end
 
 local function handle_response (id, args)

@@ -8,12 +8,6 @@ game_proto.c2s = sparser.parse [[
 	session 1 : integer
 }
 
-login 1 {
-	request {
-		account 0 : integer
-		token 1 : string
-	}
-}
 
 ]]
 
