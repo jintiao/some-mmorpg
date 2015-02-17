@@ -22,7 +22,7 @@ end
 function CMD.login (id, key)
 	local token = srp.random ()
 	local secret = aes.encrypt (token, key)
-	skynet.call (gamed, "lua", "login", id, secret)
+	skynet.call (gamed, "lua", "token", id, secret)
 	return token
 end
 
