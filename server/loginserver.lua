@@ -114,7 +114,7 @@ function loginserver.open (conf)
 	local host = conf.host or "0.0.0.0"
 	local port = tonumber (conf.port)
 	local sock = socket.listen (host, port)
-	logger.log (string.format ("listen at %s:%d", host, port))
+	logger.log (string.format ("listen on %s:%d", host, port))
 	socket.start (sock, function (fd, addr)
 		local s = slave[balance]
 		balance = balance + 1
