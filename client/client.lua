@@ -9,15 +9,15 @@ local login_proto = require "login_proto"
 local game_proto = require "game_proto"
 local constant = require "constant"
 
-local host = sproto.new (login_proto.s2c):host "package"
-local request = host:attach (sproto.new (login_proto.c2s))
-
 local user = { name = "jintiao", password = "scut" }
 local server = "127.0.0.1"
 local login_port = 9777
 local game_port = 9555
 
+local host = sproto.new (login_proto.s2c):host "package"
+local request = host:attach (sproto.new (login_proto.c2s))
 local fd 
+local game_fd
 
 local function send_message (fd, msg)
 	local package = string.pack (">s2", msg)
@@ -57,7 +57,7 @@ local function recv (last)
 		return nil, last
 	end
 	if r == "" then
-		error ("socket closed")
+		error (string.format ("socket %d closed", fd))
 	end
 
 	return unpack (last .. r)
@@ -100,6 +100,7 @@ function RESPONSE:auth (args)
 	local token = aes.encrypt (args.token, user.session_key)
 
 	fd = assert (socket.connect (server, game_port))
+	print (string.format ("game server connected, fd = %d", fd))
 	send_request ("login", { account = args.account, token = token })
 
 	host = sproto.new (game_proto.s2c):host "package"
@@ -138,6 +139,7 @@ local private_key, public_key = srp.create_client_key ()
 user.private_key = private_key
 user.public_key = public_key 
 fd = assert (socket.connect (server, login_port))
+print (string.format ("login server connected, fd = %d", fd))
 send_request ("handshake", { name = user.name, client_pub = public_key })
 
 while true do

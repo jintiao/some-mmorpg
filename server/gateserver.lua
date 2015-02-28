@@ -27,6 +27,10 @@ function gateserver.close_client (fd)
 	end
 end
 
+function gateserver.forward (fd, agent)
+	print (string.format ("forwarding fd %d to agent %d...", fd, agent))
+end
+
 function gateserver.start (handler)
 
 	function CMD.open (source, conf)
