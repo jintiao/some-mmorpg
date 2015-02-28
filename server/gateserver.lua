@@ -28,6 +28,10 @@ function gateserver.close_client (fd)
 end
 
 function gateserver.forward (fd, agent)
+	local c = connection[fd]
+	if c then
+		c.agent = agent
+	end
 	print (string.format ("forwarding fd %d to agent %d...", fd, agent))
 end
 
@@ -54,7 +58,11 @@ function gateserver.start (handler)
 			return socketdriver.close (fd)
 		end
 
-		connection[fd] = true
+		local c = {
+			fd = fd,
+			addr = addr,
+		}
+		connection[fd] = c
 		nclient = nclient + 1
 
 		handler.connect (fd, addr)
@@ -62,30 +70,36 @@ function gateserver.start (handler)
 
 	local function close_fd (fd)
 		local c = connection[fd]
-		if c ~= nil then
+		if c then
+			local agent = c.agent
+			if agent then
+				skynet.call (agent, "lua", "close")
+				c.agent = nil
+			else
+				if handler.disconnect then
+					handler.disconnect (fd)
+				end
+			end
+
 			connection[fd] = nil
 			nclient = nclient - 1
 		end
 	end
 
 	function MSG.close (fd)
-		if handler.disconnect then
-			handler.disconnect (fd)
-		end
-
 		close_fd (fd)
 	end
 
 	function MSG.error (fd, msg)
-		if handler.error then
-			handler.error (fd, msg)
-		end
-
 		close_fd (fd)
 	end
 
 	local function dispatch_msg (fd, msg, sz)
-		if connection[fd] then
+		local c = connection[fd]
+		local agent = c.agent
+		if agent then
+			skynet.redirect (agent, 0, "client", 0, msg, sz)
+		else
 			handler.message (fd, msg, sz)
 		end
 	end
@@ -109,11 +123,15 @@ function gateserver.start (handler)
 	skynet.register_protocol {
 		name = "socket",
 		id = skynet.PTYPE_SOCKET,
-		unpack = function (msg, sz) return netpack.filter (queue, msg, sz) end,
+		unpack = function (msg, sz)
+			return netpack.filter (queue, msg, sz) 
+		end,
 		dispatch = function (_, _, q, type, ...)
 			queue = q
-			if type then return MSG[type] (...) end
-		end
+			if type then
+				return MSG[type] (...) 
+			end
+		end,
 	}
 
 	skynet.start (function ()

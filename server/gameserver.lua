@@ -28,6 +28,10 @@ function gameserver.start (gamed)
 		gateserver.open_client (fd)
 	end
 
+	function handler.disconnect (fd)
+		print (string.format ("fd (%d) disconnected"))
+	end
+
 	local function do_login (msg, sz, addr)
 		assert (addr)
 		local type, name, args, response = host:dispatch (msg, sz)
