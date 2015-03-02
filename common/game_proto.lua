@@ -8,6 +8,14 @@ game_proto.c2s = sparser.parse [[
 	session 1 : integer
 }
 
+character_query 0 {
+	request {
+	}
+
+	response {
+		character_id 0 : *integer
+	}
+}
 
 ]]
 

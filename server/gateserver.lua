@@ -11,6 +11,11 @@ local maxclient
 local nclient = 0
 local CMD = setmetatable ({}, { __gc = function () netpack.clear (queue) end })
 
+skynet.register_protocol {
+	name = "client",
+	id = skynet.PTYPE_CLIENT,
+}
+
 local connection = {}
 
 function gateserver.open_client (fd)
