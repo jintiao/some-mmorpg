@@ -32,7 +32,6 @@ function gateserver.forward (fd, agent)
 	if c then
 		c.agent = agent
 	end
-	print (string.format ("forwarding fd %d to agent %d...", fd, agent))
 end
 
 function gateserver.start (handler)

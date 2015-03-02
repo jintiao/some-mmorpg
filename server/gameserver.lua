@@ -60,8 +60,9 @@ function gameserver.start (gamed)
 	local CMD = {}
 
 	function CMD.token (id, secret)
-		logger.log (string.format ("account %d auth finished, token = [%s]", id, secret)) 
-		login_token[tonumber (id)] = secret
+		logger.log (string.format ("account %d auth finished", id)) 
+		local id = tonumber (id)
+		login_token[id] = secret
 		skynet.timeout (10 * 100, function ()
 			if login_token[id] == secret then
 				logger.debug (string.format ("account %d token timeout", id))
@@ -71,8 +72,12 @@ function gameserver.start (gamed)
 	end
 
 	function handler.command (cmd, ...)
-		local f = assert (CMD[cmd])
-		return f (...)
+		local f = CMD[cmd]
+		if f then
+			return f (...)
+		else
+			return gamed.command_handler (cmd, ...)
+		end
 	end
 
 	return gateserver.start (handler)

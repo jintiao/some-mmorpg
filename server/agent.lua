@@ -1,4 +1,7 @@
 local skynet = require "skynet"
+local logger = require "logger"
+
+local gamed = ...
 
 skynet.register_protocol {
 	name = "client",
@@ -8,11 +11,13 @@ skynet.register_protocol {
 local CMD = {}
 
 function CMD.open (account)
-	print (string.format ("loading account %d...", account))
+	local name = string.format ("agnet-%d", account)
+	logger.register (name)
+	logger.log (string.format ("agent %d opened", skynet.self ()))
 end
 
 function CMD.close ()
-	print ("agent close")
+	skynet.call (gamed, "lua", "close", skynet.self ())
 end
 
 skynet.start (function ()
