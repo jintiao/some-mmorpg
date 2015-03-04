@@ -24,7 +24,7 @@ end
 local function launch_slave ()
 	local host = sprotoloader.load (1):host "package"
 	local send_request = host:attach (sprotoloader.load (2))
-	local database = config.database
+	local database = skynet.uniqueservice ("database")
 
 	local function read (fd, size)
 		return socket.read (fd, size) or error ()

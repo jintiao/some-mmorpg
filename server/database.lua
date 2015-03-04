@@ -54,8 +54,6 @@ function CMD.create (name, password)
 end
 
 skynet.start (function ()
-	skynet.register (config.database)
-
 	account.init (connection_handler, id_handler)
 
 	center = redis.connect (database_config.center)
