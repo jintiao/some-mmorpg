@@ -1,8 +1,7 @@
 local gateserver = require "gateserver"
 local skynet = require "skynet"
 local logger = require "logger"
-local sproto = require "sproto"
-local login_proto = require "login_proto"
+local sprotoloader = require "sprotoloader"
 
 local gameserver = {}
 
@@ -16,8 +15,8 @@ end
 function gameserver.start (gamed)
 	local handler = {}
 
-	local host = sproto.new (login_proto.c2s):host "package"
-	local send_request = host:attach (sproto.new (login_proto.s2c))
+	local host = sprotoloader.load (1):host "package"
+	local send_request = host:attach (sprotoloader.load (2))
 
 	function handler.open (source, conf)
 		return gamed.open (conf.name)

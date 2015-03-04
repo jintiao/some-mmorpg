@@ -1,10 +1,9 @@
 local skynet = require "skynet"
 local socket = require "socket"
 local logger = require "logger"
-local sproto = require "sproto"
+local sprotoloader = require "sprotoloader"
 local srp = require "srp"
 local aes = require "aes"
-local login_proto = require "login_proto"
 local config = require "config"
 local constant = require "constant"
 
@@ -23,8 +22,8 @@ end
 
 
 local function launch_slave ()
-	local host = sproto.new (login_proto.c2s):host "package"
-	local send_request = host:attach (sproto.new (login_proto.s2c))
+	local host = sprotoloader.load (1):host "package"
+	local send_request = host:attach (sprotoloader.load (2))
 	local database = config.database
 
 	local function read (fd, size)

@@ -1,12 +1,15 @@
 local skynet = require "skynet"
 local logger = require "logger"
-local sproto = require "sproto"
-local game_proto = require "game_proto"
+local sprotoloader = require "sprotoloader"
 
 local gamed = ...
 
-local host = sproto.new (game_proto.c2s):host "package"
-local send_request = host:attach (sproto.new (game_proto.s2c))
+local host = sprotoloader.load (3):host "package"
+local send_request = host:attach (sprotoloader.load (4))
+
+local account
+
+local REQUEST = {}
 
 local function handle_request (name, args)
 	print ("handle_request", name)
@@ -25,6 +28,7 @@ skynet.register_protocol {
 	name = "client",
 	id = skynet.PTYPE_CLIENT,
 	unpack = function (msg, sz)
+		print ("agent unpack", msg, sz)
 		return host:dispatch (msg, sz)
 	end,
 	dispatch = function (_, _, type, ...)
@@ -40,8 +44,9 @@ skynet.register_protocol {
 
 local CMD = {}
 
-function CMD.open (account)
-	local name = string.format ("agnet-%d", account)
+function CMD.open (id)
+	account = id
+	local name = string.format ("agnet-%d", id)
 	logger.register (name)
 	logger.log (string.format ("agent %d opened", skynet.self ()))
 end
