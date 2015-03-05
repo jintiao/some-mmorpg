@@ -1,7 +1,7 @@
 local loginserver = require "loginserver"
 local skynet = require "skynet"
 local logger = require "logger"
-local config = require "config"
+local config = require "config.system"
 local srp = require "srp"
 local aes = require "aes"
 

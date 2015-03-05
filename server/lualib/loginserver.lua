@@ -4,7 +4,7 @@ local logger = require "logger"
 local sprotoloader = require "sprotoloader"
 local srp = require "srp"
 local aes = require "aes"
-local config = require "config"
+local config = require "config.system"
 local constant = require "constant"
 
 local loginserver = {}

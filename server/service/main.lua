@@ -1,5 +1,5 @@
 local skynet = require "skynet"
-local config = require "config"
+local config = require "config.system"
 
 skynet.start(function()
 	skynet.uniqueservice ("protoloader")

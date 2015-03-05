@@ -108,6 +108,13 @@ function RESPONSE:auth (args)
 	send_request ("character_query")
 end
 
+function RESPONSE:character_query (args)
+	print ("RESPONSE:character_query")
+	for k, v in pairs (args.character_id) do
+		print (k, v)
+	end
+end
+
 local function handle_response (id, args)
 	local s = assert (session[id])
 	session[id] = nil

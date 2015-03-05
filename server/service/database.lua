@@ -1,8 +1,8 @@
-local config = require "config"
-local database_config = require "database_config"
 local skynet = require "skynet"
 local redis = require "redis"
-local account = require "account"
+local config = require "config.system"
+local database_config = require "config.database_config"
+local account = require "db.account"
 
 local center
 local group = {}
@@ -10,10 +10,9 @@ local ngroup
 
 local function hash_str (str)
 	local hash = 0
-	local len = string.len (str)
-	for i = 1, len do
-		hash = hash + str:byte (i)
-	end
+	string.gsub (str, "(%w)", function (c)
+		hash = hash + string.byte (c)
+	end)
 	return hash
 end
 

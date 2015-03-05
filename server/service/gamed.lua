@@ -1,7 +1,7 @@
 local gameserver = require "gameserver"
 local skynet = require "skynet"
 local logger = require "logger"
-local config = require "config"
+local config = require "config.system"
 
 local logind = tonumber (...)
 
@@ -43,7 +43,7 @@ function gamed.login_handler (fd, account)
 		agent = table.remove (pool, 1)
 	end
 
-	skynet.call (agent, "lua", "open", account)
+	skynet.call (agent, "lua", "open", fd, account)
 	gameserver.forward (fd, agent)
 end
 
