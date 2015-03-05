@@ -36,6 +36,7 @@ function gateserver.forward (fd, agent)
 	local c = connection[fd]
 	if c then
 		c.agent = agent
+		logger.debug (string.format ("start forward fd(%d) to agent(%d)", fd, agent))
 	end
 end
 

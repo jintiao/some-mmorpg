@@ -43,8 +43,8 @@ function gamed.login_handler (fd, account)
 		agent = table.remove (pool, 1)
 	end
 
-	skynet.call (agent, "lua", "open", fd, account)
 	gameserver.forward (fd, agent)
+	skynet.call (agent, "lua", "open", fd, account)
 end
 
 gameserver.start (gamed)

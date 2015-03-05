@@ -23,12 +23,13 @@ function gameserver.start (gamed)
 	end
 
 	function handler.connect (fd, addr)
+		logger.log (string.format ("connect from %s (fd = %d)", addr, fd))
 		handshake[fd] = addr
 		gateserver.open_client (fd)
 	end
 
 	function handler.disconnect (fd)
-		print (string.format ("fd (%d) disconnected"))
+		logger.log (string.format ("fd (%d) disconnected", fd))
 	end
 
 	local function do_login (msg, sz, addr)
@@ -59,7 +60,6 @@ function gameserver.start (gamed)
 	local CMD = {}
 
 	function CMD.token (id, secret)
-		logger.log (string.format ("account %d auth finished", id)) 
 		local id = tonumber (id)
 		login_token[id] = secret
 		skynet.timeout (10 * 100, function ()
