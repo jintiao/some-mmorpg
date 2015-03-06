@@ -110,8 +110,13 @@ end
 
 function RESPONSE:character_list (args)
 	print ("RESPONSE:character_list")
-	for k, v in pairs (args.character) do
-		print (k, v)
+
+	if not args or not args.character then
+		print "empty list"
+	else
+		for k, v in pairs (args.character) do
+			print (k, v)
+		end
 	end
 end
 
