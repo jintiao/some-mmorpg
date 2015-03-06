@@ -27,7 +27,6 @@ function gamed.command_handler (cmd, ...)
 	local CMD = {}
 
 	function CMD.close (agent)	
-		logger.debug (string.format ("agent %d closed", agent))
 		table.insert (pool, agent)
 	end
 

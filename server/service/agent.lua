@@ -4,6 +4,7 @@ local sprotoloader = require "sprotoloader"
 local socket = require "socket"
 
 local gamed = ...
+local database
 
 local host = sprotoloader.load (3):host "package"
 local send_request = host:attach (sprotoloader.load (4))
@@ -63,24 +64,24 @@ function CMD.open (fd, id)
 	account = id
 	local name = string.format ("agnet-%d", id)
 	logger.register (name)
-	logger.log (string.format ("agent %d opened", skynet.self ()))
+	logger.debug (string.format ("agent %d opened", skynet.self ()))
 end
 
 function CMD.close ()
-	skynet.call (gamed, "lua", "close", skynet.self ())
+	local self = skynet.self ()
+	logger.debug (string.format ("agent %d closed", self))
+	skynet.call (gamed, "lua", "close", self)
 end
 
 skynet.start (function ()
+	database = skynet.uniqueservice ("database")
 	skynet.dispatch ("lua", function (_, _, command, ...)
 		local f = assert (CMD[command])
 		skynet.retpack (f (...))
 	end)
 end)
 
-function REQUEST:character_query ()
-	local t = {}
-	table.insert (t, 123)
-	table.insert (t, 234)
-	table.insert (t, 456)
-	return { character_id = t }
+function REQUEST:character_list ()
+	local list = skynet.call (database, "lua", "character", "list", account)
+	return { character = list }
 end

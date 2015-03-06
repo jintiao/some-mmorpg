@@ -39,13 +39,14 @@ function account.create (name, password)
 	local id = id_handler ()
 	local connection = connection_handler (name)
 	local key = make_user_key (name)
-	assert (connection:hsetnx (key, "account", id) ~= 0) 
+	if connection:hsetnx (key, "account", id) == 0 then
+		return
+	end
 
 	local salt, verifier = srp.create_verifier (name, password)
-	assert (connection:hmset (key, "salt", salt, "verifier", verifier) ~= 0)
-
-	connection = connection_handler (id)
-	assert (connection:sadd ("account:" .. id, name) ~= 0)
+	if connection:hmset (key, "salt", salt, "verifier", verifier) == 0 then
+		return
+	end
 
 	return id
 end

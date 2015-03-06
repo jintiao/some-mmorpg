@@ -3,6 +3,7 @@ local redis = require "redis"
 local config = require "config.system"
 local database_config = require "config.database_config"
 local account = require "db.account"
+local character = require "db.character"
 
 local center
 local group = {}
@@ -37,23 +38,15 @@ function id_handler ()
 	return center:incr ("naccount")
 end
 
-local CMD = {}
-
-function CMD.load (name)
-	return account.load (name)
-end
-
-function CMD.create (name, password)
-	local ok, err = pcall (account.create, name, password)
-	if not ok then
-		return
-	else
-		return err
-	end
+local MODULE = {}
+local function module_init (name, mod)
+	MODULE[name] = mod
+	mod.init (connection_handler, id_handler)
 end
 
 skynet.start (function ()
-	account.init (connection_handler, id_handler)
+	module_init ("account", account)
+	module_init ("character", character)
 
 	center = redis.connect (database_config.center)
 	ngroup = #database_config.group
@@ -61,8 +54,10 @@ skynet.start (function ()
 		table.insert (group, redis.connect (c))
 	end
 
-	skynet.dispatch ("lua", function (_, _, cmd, ...)
-		local f = assert (CMD[cmd])
-		skynet.retpack (f (...))
+	skynet.dispatch ("lua", function (_, _, mod, cmd, ...)
+		local m = assert (MODULE[mod])
+		local f = assert (m[cmd])
+		local ok, ret = pcall (f, ...)
+		skynet.retpack (ret)
 	end)
 end)

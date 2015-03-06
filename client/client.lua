@@ -105,12 +105,12 @@ function RESPONSE:auth (args)
 
 	host = sproto.new (game_proto.s2c):host "package"
 	request = host:attach (sproto.new (game_proto.c2s))
-	send_request ("character_query")
+	send_request ("character_list")
 end
 
-function RESPONSE:character_query (args)
-	print ("RESPONSE:character_query")
-	for k, v in pairs (args.character_id) do
+function RESPONSE:character_list (args)
+	print ("RESPONSE:character_list")
+	for k, v in pairs (args.character) do
 		print (k, v)
 	end
 end
