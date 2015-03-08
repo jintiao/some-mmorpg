@@ -32,8 +32,7 @@ function gameserver.start (gamed)
 		logger.log (string.format ("fd (%d) disconnected", fd))
 	end
 
-	local function do_login (msg, sz, addr)
-		assert (addr)
+	local function do_login (msg, sz)
 		local type, name, args, response = host:dispatch (msg, sz)
 		assert (type == "REQUEST")
 		assert (name == "login")
@@ -45,15 +44,19 @@ function gameserver.start (gamed)
 
 	function handler.message (fd, msg, sz)
 		local addr = handshake[fd]
-		handshake[fd] = nil
 
-		local ok, account = pcall (do_login, msg, sz, addr)
-		if not ok then
-			logger.log (string.format ("%s login failed", addr))
-			gateserver.close_client (fd)
+		if addr then
+			handshake[fd] = nil
+			local ok, account = pcall (do_login, msg, sz)
+			if not ok then
+				logger.log (string.format ("%s login failed", addr))
+				gateserver.close_client (fd)
+			else
+				logger.log (string.format ("account %d login success", account))
+				gamed.login_handler (fd, account)
+			end
 		else
-			logger.log (string.format ("account %d login success", account))
-			gamed.login_handler (fd, account)
+			gamed.message_handler (fd, msg, sz)
 		end
 	end
 

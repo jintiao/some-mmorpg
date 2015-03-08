@@ -7,6 +7,7 @@ local logind = tonumber (...)
 
 local gamed = {}
 
+local pending_agent = {}
 local pool = {}
 
 function gamed.open (name)
@@ -42,8 +43,19 @@ function gamed.login_handler (fd, account)
 		agent = table.remove (pool, 1)
 	end
 
-	gameserver.forward (fd, agent)
+	pending_agent[fd] = agent
 	skynet.call (agent, "lua", "open", fd, account)
+	gameserver.forward (fd, agent)
+	pending_agent[fd] = nil
+end
+
+function gamed.message_handler (fd, msg, sz)
+	local agent = pending_agent[fd]
+	if agent then
+		skynet.rawcall(agent, "client", msg, sz)
+	else
+		logger.warning (string.format ("unknown message from fd (%d), size (%d)", fd, sz))
+	end
 end
 
 gameserver.start (gamed)

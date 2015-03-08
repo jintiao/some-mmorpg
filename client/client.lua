@@ -155,7 +155,44 @@ fd = assert (socket.connect (server, login_port))
 print (string.format ("login server connected, fd = %d", fd))
 send_request ("handshake", { name = user.name, client_pub = public_key })
 
+local COMMAND = {}
+local HELP = {}
+
+local function handle_cmd (line)
+	local v = {}
+	for i in string.gmatch (line, "%S+") do
+		table.insert (v, i)
+	end
+
+	local cmd = COMMAND[v[1]]
+	if cmd then
+		pcall (cmd, select (2, table.unpack (v)))
+	else
+		print (string.format ('invalid command "%s"', v[1]))
+	end
+end
+
+function COMMAND.help ()
+	for k, v in pairs (HELP) do
+		print (k, v ())
+	end
+end
+
+function HELP.character_create ()
+	return "create new character"
+end
+
+function COMMAND.character_create (race, class)
+	print ("aasdfadf")
+end
+
 while true do
 	dispatch_message ()
-	socket.usleep (100)
+	local cmd = socket.readstdin ()
+	if cmd then
+		handle_cmd (cmd)
+	else
+		socket.usleep (100)
+	end
 end
+

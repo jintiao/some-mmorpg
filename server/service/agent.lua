@@ -2,6 +2,7 @@ local skynet = require "skynet"
 local logger = require "logger"
 local sprotoloader = require "sprotoloader"
 local socket = require "socket"
+local character_handler = require "handler.character_handler"
 
 local gamed = ...
 local database
@@ -9,10 +10,10 @@ local database
 local host = sprotoloader.load (3):host "package"
 local send_request = host:attach (sprotoloader.load (4))
 
-local client_fd
-local account
+local user
 
-local REQUEST = {}
+local client_fd
+local REQUEST
 
 local function send_msg (fd, msg)
 	local package = string.pack (">s2", msg)
@@ -26,18 +27,9 @@ local function handle_request (name, args, response)
 		if response then
 			send_msg (client_fd, response (ret))
 		end
+	else
+		logger.log (string.format ("unhandled message : %s", name)) 
 	end
-
-	print ("handle_request", name)
-	if args then
-		for k, v in pairs (args) do
-			print (k, v)
-		end
-	end
-end
-
-local function handle_response (id, args)
-	print ("handle_response", id)
 end
 
 skynet.register_protocol {
@@ -49,8 +41,6 @@ skynet.register_protocol {
 	dispatch = function (_, _, type, ...)
 		if type == "REQUEST" then
 			handle_request (...)
-		elseif type == "RESPONSE" then
-			handle_response (...)
 		else
 			print ("invalid message type", type)
 		end
@@ -59,10 +49,17 @@ skynet.register_protocol {
 
 local CMD = {}
 
-function CMD.open (fd, id)
-	client_fd = fd
-	account = id
-	local name = string.format ("agnet-%d", id)
+function CMD.open (fd, account)
+	user = { 
+		fd = fd, 
+		account = account,
+		REQUEST = {}
+	}
+	character_handler.register (user)
+	client_fd = user.fd
+	REQUEST = user.REQUEST
+
+	local name = string.format ("agnet-%d", account)
 	logger.register (name)
 	logger.debug (string.format ("agent %d opened", skynet.self ()))
 end
@@ -70,18 +67,14 @@ end
 function CMD.close ()
 	local self = skynet.self ()
 	logger.debug (string.format ("agent %d closed", self))
+	user = nil
 	skynet.call (gamed, "lua", "close", self)
 end
 
 skynet.start (function ()
-	database = skynet.uniqueservice ("database")
 	skynet.dispatch ("lua", function (_, _, command, ...)
 		local f = assert (CMD[command])
 		skynet.retpack (f (...))
 	end)
 end)
 
-function REQUEST:character_list ()
-	local list = skynet.call (database, "lua", "character", "list", account)
-	return { character = list }
-end
