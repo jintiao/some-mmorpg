@@ -17,6 +17,18 @@ character_list 0 {
 	}
 }
 
+character_create 1 {
+	request {
+		name 0 : string
+		race 1 : integer
+		class 2 : integer
+	}
+
+	response {
+		errno 0 : integer
+	}
+}
+
 ]]
 
 game_proto.s2c = sparser.parse [[
@@ -24,6 +36,7 @@ game_proto.s2c = sparser.parse [[
 	type 0 : integer
 	session 1 : integer
 }
+
 ]]
 
 return game_proto

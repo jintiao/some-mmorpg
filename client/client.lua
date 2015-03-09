@@ -9,7 +9,7 @@ local login_proto = require "login_proto"
 local game_proto = require "game_proto"
 local constant = require "constant"
 
-local user = { name = "jintiao", password = "scut" }
+local user = { name = "helloworld", password = "123456" }
 local server = "127.0.0.1"
 local login_port = 9777
 local game_port = 9555
@@ -155,37 +155,44 @@ fd = assert (socket.connect (server, login_port))
 print (string.format ("login server connected, fd = %d", fd))
 send_request ("handshake", { name = user.name, client_pub = public_key })
 
-local COMMAND = {}
 local HELP = {}
 
 local function handle_cmd (line)
-	local v = {}
-	for i in string.gmatch (line, "%S+") do
-		table.insert (v, i)
+	local cmd
+	local p = string.gsub (line, "([%w-_]+)", function (s) 
+		cmd = s
+		return ""
+	end, 1)
+
+	if string.lower (cmd) == "help" then
+		for k, v in pairs (HELP) do
+			print (string.format ("command:\n\t%s\nparameter:\n%s", k, v()))
+		end
+		return
 	end
 
-	local cmd = COMMAND[v[1]]
+	local t = {}
+	string.gsub (p, "(%w+)%s*=%s*(%w+)", function (k, v)
+		t[k] = v
+	end)
+
 	if cmd then
-		pcall (cmd, select (2, table.unpack (v)))
-	else
-		print (string.format ('invalid command "%s"', v[1]))
-	end
-end
-
-function COMMAND.help ()
-	for k, v in pairs (HELP) do
-		print (k, v ())
+		local ok = pcall (send_request, cmd, t)
+		if not ok then
+			print (string.format ("invalid message %s", cmd))
+		end
 	end
 end
 
 function HELP.character_create ()
-	return "create new character"
+	return [[
+	name: your nickname in game
+	race: 1(human)/2(orc)
+	class: 1(warrior)/2(mage)
+]]
 end
 
-function COMMAND.character_create (race, class)
-	print ("aasdfadf")
-end
-
+print ('type "help" to see all available command.')
 while true do
 	dispatch_message ()
 	local cmd = socket.readstdin ()

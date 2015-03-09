@@ -20,17 +20,11 @@ function character.list (account)
 	local key, field = make_account_key (account)
 	logger.debug (string.format ("character.list %d, key (%s), field (%d)", account, key, field))
 
-	if not connection:exists (key) then
-		logger.debug ("key not exists")
-		return 
-	end
-
 	local v = connection:hget (key, field)
 	if not v then
-		logger.debug ("field not exists")
-		return 
+		logger.debug ("no record")
+		return
 	end
-
 	return cjson.decode (v)
 end
 

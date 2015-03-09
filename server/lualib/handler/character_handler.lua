@@ -14,9 +14,14 @@ local function character_list ()
 	return { character = list }
 end
 
+local function character_create (t)
+	print "character_create"
+end
+
 function handler.register (user)
 	account = user.account
 	user.REQUEST.character_list = character_list
+	user.REQUEST.character_create = character_create
 end
 
 return handler

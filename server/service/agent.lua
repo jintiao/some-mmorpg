@@ -24,7 +24,7 @@ local function handle_request (name, args, response)
 	local f = REQUEST[name]
 	if f then
 		ret = f (args)
-		if response then
+		if response and ret then
 			send_msg (client_fd, response (ret))
 		end
 	else
