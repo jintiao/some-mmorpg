@@ -10,8 +10,7 @@ local function character_list ()
 	return { character = list }
 end
 
-local function character_create (t)
-	print "character_create"
+local function character_create (args)
 end
 
 function handler.register (user)

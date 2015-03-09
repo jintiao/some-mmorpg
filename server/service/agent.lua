@@ -62,8 +62,8 @@ function CMD.open (fd, account)
 	client_fd = user.fd
 	lock (function ()
 		character_handler.register (user)
+		REQUEST = user.REQUEST
 	end)
-	REQUEST = user.REQUEST
 
 	local name = string.format ("agnet-%d", account)
 	logger.register (name)

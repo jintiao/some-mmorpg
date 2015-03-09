@@ -10,9 +10,9 @@ function account.init (ch, ih)
 	id_handler = ih
 end
 
-local function make_user_key (name)
+local function make_key (name)
 	assert (name)
-	return "user:" .. name
+	return connection_handler (name), string.format ("user:%s", name)
 end
 
 function account.load (name)
@@ -22,8 +22,7 @@ function account.load (name)
 
 	local acc = { name = name }
 
-	local connection = connection_handler (name)
-	local key = make_user_key (name)
+	local connection, key = make_key (name)
 	if connection:exists (key) then
 		acc.id = connection:hget (key, "account")
 		acc.salt = connection:hget (key, "salt")
@@ -37,8 +36,7 @@ end
 
 function account.create (name, password)
 	local id = id_handler ()
-	local connection = connection_handler (name)
-	local key = make_user_key (name)
+	local connection, key = make_key (name)
 	if connection:hsetnx (key, "account", id) == 0 then
 		return
 	end
