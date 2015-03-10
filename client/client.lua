@@ -120,6 +120,19 @@ function RESPONSE:character_list (args)
 	end
 end
 
+function RESPONSE:character_create (args)
+	print ("RESPONSE:character_create")
+
+	if args.character then
+		for k, v in pairs (args.character) do
+			print (k, v)
+		end
+	elseif args.errno then
+		print ("error : ", args.errno)
+	end
+end
+
+
 local function handle_response (id, args)
 	local s = assert (session[id])
 	session[id] = nil
@@ -172,7 +185,7 @@ local function handle_cmd (line)
 	end
 
 	local t = {}
-	string.gsub (p, "(%w+)%s*=%s*(%w+)", function (k, v)
+	string.gsub (p, "(%w+)%s*=%s*([%w]+)", function (k, v)
 		t[k] = v
 	end)
 

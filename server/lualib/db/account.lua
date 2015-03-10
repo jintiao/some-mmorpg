@@ -1,6 +1,13 @@
 local constant = require "constant"
 local srp = require "srp"
 
+--[[
+user:helloworld
+	account = 1
+	salt = xxxx
+	verifier = yyyy
+]]--
+
 local account = {}
 local connection_handler
 local id_handler
@@ -16,10 +23,6 @@ local function make_key (name)
 end
 
 function account.load (name)
-	if not name then
-		return
-	end
-
 	local acc = { name = name }
 
 	local connection, key = make_key (name)
