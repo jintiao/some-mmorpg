@@ -35,7 +35,7 @@ function connection_handler (key)
 end
 
 function id_handler ()
-	return center:incr ("naccount")
+	return center:incr ("uniqueid")
 end
 
 local MODULE = {}

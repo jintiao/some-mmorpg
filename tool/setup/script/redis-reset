@@ -1,0 +1,14 @@
+#!/bin/bash
+
+BASEDIR="${PWD}/$(dirname $0)"
+
+${BASEDIR}/redis-shutdown
+
+for i in `seq 0 32`
+do
+	NAME="redis${i}"
+	DIR="${BASEDIR}/${NAME}"
+	rm ${dir}/${NAME}.rdb
+done
+
+${BASEDIR}/redis-start

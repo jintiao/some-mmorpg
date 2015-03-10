@@ -1,11 +1,14 @@
 local gd_data = {
-	RACE_HUMAN = 1,
-	RACE_ORC = 2,
-
-	CLASS_WARRIOR = 1,
-	CLASS_MAGE = 2,
 }
 
+gd_data.race = {
+	"human",
+	"orc",
+}
 
+gd_data.class = {
+	"warrior",
+	"mage",
+}
 
 return gd_data

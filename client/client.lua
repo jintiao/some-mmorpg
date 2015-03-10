@@ -115,7 +115,10 @@ function RESPONSE:character_list (args)
 		print "empty list"
 	else
 		for k, v in pairs (args.character) do
-			print (k, v)
+			print ("character id:", k)
+			for a, b in pairs (v) do
+				print ("", a, b)
+			end
 		end
 	end
 end
