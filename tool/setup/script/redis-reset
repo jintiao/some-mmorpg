@@ -8,7 +8,6 @@ for i in `seq 0 32`
 do
 	NAME="redis${i}"
 	DIR="${BASEDIR}/${NAME}"
-	rm ${dir}/${NAME}.rdb
+	rm ${DIR}/${NAME}.rdb
 done
 
-${BASEDIR}/redis-start
