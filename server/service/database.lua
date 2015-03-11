@@ -1,5 +1,6 @@
 local skynet = require "skynet"
 local redis = require "redis"
+local errno = require "errno"
 local config = require "config.system"
 local database_config = require "config.database_config"
 local account = require "db.account"
@@ -55,8 +56,14 @@ skynet.start (function ()
 	end
 
 	skynet.dispatch ("lua", function (_, _, mod, cmd, ...)
-		local m = assert (MODULE[mod])
-		local f = assert (m[cmd])
-		skynet.retpack (f (...))
+		local m = MODULE[mod]
+		if not m then
+			skynet.retpack (false, errno.UNSUPPORTED_DATABASE_METHOD)
+		end
+		local f = m[cmd]
+		if not f then
+			skynet.retpack (false, errno.UNSUPPORTED_DATABASE_METHOD)
+		end
+		skynet.retpack (pcall (f, ...))
 	end)
 end)

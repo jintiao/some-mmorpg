@@ -27,12 +27,16 @@ local function handle_request (name, args, response)
 	end
 	local f = REQUEST[name]
 	if f then
-		ret = f (args)
-		if response and ret then
-			send_msg (client_fd, response (ret))
+		local ok, ret = pcall (f, user, args)
+		if not ok then
+			logger.warning (string.format ("handle message failed : %s", name), ret) 
+		else
+			if response and ret then
+				send_msg (client_fd, response (ret))
+			end
 		end
 	else
-		logger.log (string.format ("unhandled message : %s", name)) 
+		logger.warning (string.format ("unhandled message : %s", name)) 
 	end
 end
 

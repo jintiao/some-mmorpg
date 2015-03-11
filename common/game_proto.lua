@@ -16,9 +16,6 @@ game_proto.c2s = sparser.parse [[
 }
 
 character_list 0 {
-	request {
-	}
-
 	response {
 		character 0 : *character
 	}
@@ -35,6 +32,12 @@ character_create 1 {
 	response {
 		character 0 : character
 		errno 1 : integer
+	}
+}
+
+character_pick 2 {
+	request {
+		id 0 : integer
 	}
 }
 

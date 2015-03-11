@@ -1,4 +1,5 @@
 local constant = require "constant"
+local errno = require "errno"
 local srp = require "srp"
 
 --[[
@@ -18,11 +19,12 @@ function account.init (ch, ih)
 end
 
 local function make_key (name)
-	assert (name)
 	return connection_handler (name), string.format ("user:%s", name)
 end
 
 function account.load (name)
+	assert (name, errno.INVALID_ARGUMENT)
+
 	local acc = { name = name }
 
 	local connection, key = make_key (name)
@@ -38,6 +40,8 @@ function account.load (name)
 end
 
 function account.create (name, password)
+	assert (name and #name < 24 and password and #password < 24, errno.INVALID_ARGUMENT)
+	
 	local id = id_handler ()
 	local connection, key = make_key (name)
 	if connection:hsetnx (key, "account", id) == 0 then

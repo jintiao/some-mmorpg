@@ -27,6 +27,7 @@ end
 local session = {}
 local session_id = 0
 local function send_request (name, args)
+	print ("send_request", name)
 	session_id = session_id + 1
 	local str = request (name, args, session_id)
 	send_message (fd, str)
