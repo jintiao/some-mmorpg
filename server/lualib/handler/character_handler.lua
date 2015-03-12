@@ -31,7 +31,17 @@ function REQUEST.character_create (args)
 end
 
 function REQUEST.character_pick (args)
-	print "character_pick"
+	assert (args, errno.INVALID_ARGUMENT)
+	local id = assert (args.id, errno.INVALID_ARGUMENT)
+
+	local ok, success = skynet.call (database, "lua", "character", "check", user.account, id)
+	assert (ok and success, errno.CHARACTER_NOT_EXISTS)
+
+	local world = skynet.uniqueservice ("world")	
+	ok = skynet.call (world, "lua", "enter", id)
+	if ok then
+		handler.unregister (user)
+	end
 end
 
 function handler.register (u)
@@ -46,6 +56,7 @@ function handler.register (u)
 end
 
 function handler.unregister (u)
+	print ("unregister")
 	assert (user == u)
 	user = nil
 	local t = u.REQUEST

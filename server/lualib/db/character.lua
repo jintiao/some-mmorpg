@@ -52,6 +52,19 @@ function character.load (id)
 	return t
 end
 
+function character.check (account, id)
+	local connection, key, field = make_account_key (account)
+	local v = connection:hget (key, field)
+	if not v then return end
+	local list = packer.unpack (v)
+	for i = 1, #list do
+		if list[i] == id then
+			return true
+		end
+	end
+	return false
+end
+
 function character.list (account)
 	local connection, key, field = make_account_key (account)
 	local v = connection:hget (key, field)

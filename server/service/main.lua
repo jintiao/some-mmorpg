@@ -2,9 +2,10 @@ local skynet = require "skynet"
 local config = require "config.system"
 
 skynet.start(function()
-	skynet.uniqueservice ("protoloader")
-	skynet.uniqueservice ("database")
 	skynet.uniqueservice ("gdd")
+	skynet.uniqueservice ("database")
+	skynet.uniqueservice ("protoloader")
+	skynet.uniqueservice ("world")
 
 	local logind = skynet.newservice ("logind")
 	local gamed = skynet.newservice ("gamed", logind)
