@@ -27,7 +27,7 @@ local function handle_request (name, args, response)
 	end
 	local f = REQUEST[name]
 	if f then
-		local ok, ret = pcall (f, user, args)
+		local ok, ret = pcall (f, args)
 		if not ok then
 			logger.warning (string.format ("handle message failed : %s", name), ret) 
 		else

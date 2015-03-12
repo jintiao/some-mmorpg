@@ -24,9 +24,6 @@ character_list 0 {
 character_create 1 {
 	request {
 		character 0 : character
-		name 1 : string
-		race 2 : integer
-		class 3 : integer
 	}
 
 	response {

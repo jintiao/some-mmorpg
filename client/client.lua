@@ -196,7 +196,6 @@ local function handle_cmd (line)
 	end
 
 	if not next (t) then
-		print ("bbb")
 		t = nil
 	end
 
