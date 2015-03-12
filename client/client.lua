@@ -5,8 +5,8 @@ local socket = require "clientsocket"
 local sproto = require "sproto"
 local srp = require "srp"
 local aes = require "aes"
-local login_proto = require "login_proto"
-local game_proto = require "game_proto"
+local login_proto = require "proto.login_proto"
+local game_proto = require "proto.game_proto"
 local constant = require "constant"
 
 local user = { name = "helloworld", password = "123456" }

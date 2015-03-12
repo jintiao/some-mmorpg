@@ -1,11 +1,12 @@
 local skynet = require "skynet"
 local errno = require "errno"
-local gd_data = require "gd_data"
+local sharedata = require "sharedata"
 
 local handler = {}
 local REQUEST = {}
 
 local database
+local gdd
 local user
 
 function REQUEST.character_list ()
@@ -20,8 +21,8 @@ function REQUEST.character_create (args)
 	assert (c, errno.INVALID_ARGUMENT)
 	local name, race, class = c.name, c.race, c.class
 	assert (name and #name < 24, errno.INVALID_ARGUMENT)
-	assert (race and race > 0 and race <= #gd_data.race, errno.INVALID_ARGUMENT)
-	assert (class and class > 0 and class <= #gd_data.class, errno.INVALID_ARGUMENT)
+	assert (race and race > 0 and race <= #gdd.race, errno.INVALID_ARGUMENT)
+	assert (class and class > 0 and class <= #gdd.class, errno.INVALID_ARGUMENT)
 
 	local ok, ch = skynet.call (database, "lua", "character", "create", user.account, name, race, class)
 	assert (ok == true, ok)
@@ -35,6 +36,7 @@ end
 
 function handler.register (u)
 	database = skynet.uniqueservice ("database")
+	gdd = sharedata.query "gdd"
 	user = u
 
 	local t = user.REQUEST
