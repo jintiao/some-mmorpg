@@ -190,14 +190,20 @@ local function handle_cmd (line)
 	end
 
 	local t = {}
-	string.gsub (p, "(%w+)%s*=%s*([%w]+)", function (k, v)
-		t[k] = v
-	end)
+	local f = load (p, "=" .. cmd, "t", t)
+	if f then
+		f ()
+	end
+
+	if not next (t) then
+		print ("bbb")
+		t = nil
+	end
 
 	if cmd then
-		local ok = pcall (send_request, cmd, t)
+		local ok, err = pcall (send_request, cmd, t)
 		if not ok then
-			print (string.format ("invalid message %s", cmd))
+			print (string.format ("invalid command (%s), error (%s)", cmd, err))
 		end
 	end
 end
