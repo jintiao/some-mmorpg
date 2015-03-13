@@ -43,8 +43,12 @@ function REQUEST.character_pick (args)
 	local ok, success = skynet.call (database, "lua", "character", "check", user.account, id)
 	assert (ok and success, errno.CHARACTER_NOT_EXISTS)
 
+	local appearance
+	ok, appearance = skynet.call (database, "lua", "character", "load", id)
+	assert (ok and appearance, errno.INTERNAL_ERROR)
+
 	local world = skynet.uniqueservice ("world")	
-	ok = skynet.call (world, "lua", "enter", id)
+	ok = skynet.call (world, "lua", "enter", appearance.id, appearance.map)
 	if ok then
 		handler.unregister (user)
 	end
