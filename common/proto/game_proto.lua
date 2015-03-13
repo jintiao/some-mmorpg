@@ -8,26 +8,26 @@ game_proto.c2s = sparser.parse [[
 	session 1 : integer
 }
 
-.character {
+.appearance {
 	id 0 : integer
 	name 1 : string
-	race 2 : integer
-	class 3 : integer
+	race 2 : string
+	class 3 : string
 }
 
 character_list 0 {
 	response {
-		character 0 : *character
+		character 0 : *appearance
 	}
 }
 
 character_create 1 {
 	request {
-		character 0 : character
+		character 0 : appearance
 	}
 
 	response {
-		character 0 : character
+		character 0 : appearance
 		errno 1 : integer
 	}
 }

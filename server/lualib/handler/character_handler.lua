@@ -21,11 +21,17 @@ function REQUEST.character_create (args)
 	assert (c, errno.INVALID_ARGUMENT)
 	local name, race, class = c.name, c.race, c.class
 	assert (name and #name < 24, errno.INVALID_ARGUMENT)
-	assert (race and race > 0 and race <= #gdd.race, errno.INVALID_ARGUMENT)
-	assert (class and class > 0 and class <= #gdd.class, errno.INVALID_ARGUMENT)
+	assert (race and gdd.race[race], errno.INVALID_ARGUMENT)
+	assert (class and gdd.class[class], errno.INVALID_ARGUMENT)
 
-	local ok, ch = skynet.call (database, "lua", "character", "create", user.account, name, race, class)
-	assert (ok == true, ok)
+	local r = gdd.race[race]
+	local pos = {}
+	for k, v in pairs (r.pos) do
+		pos[k] = v
+	end
+	local appearance = { name = name, race = race, class = class, map = r.home, pos = pos }
+	local ok, ch = skynet.call (database, "lua", "character", "create", user.account, appearance)
+	assert (ok == true, ch)
 		
 	return { character = ch }
 end

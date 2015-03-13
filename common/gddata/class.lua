@@ -1,6 +1,6 @@
 local class = {
-	"warrior",
-	"mage",
+	["warrior"] = { name = "warrior" },
+	["mage"] = { name = "mage" },
 }
 
 return class

@@ -3,20 +3,18 @@ local packer = require "db.packer"
 local errno = require "errno"
 
 --[[
-account:0
+char-list:0
 	1 : { 222, 333 }
 
-character:2
-	22 : { id = 222, name = "hello", race = 1, class = 1 }
+char-appearance:2
+	22 : { id = 222, name = "hello", race = "human", class = "warrior" map = "Stormwind City" pos = {100, 100} }
 
-character:3
-	33 : { id = 333, name = "world", race = 1, class = 2 }
+char-appearance:3
+	33 : { id = 333, name = "world", race = "human", class = "mage" map = "Stormwind City" pos = {100, 100} }
 
-name:hello
-	222
-
-name:world
-	333
+char-name
+	hello : 222
+	world : 333
 ]]--
 
 local character = {}
@@ -31,17 +29,17 @@ end
 local function make_account_key (account)
 	local major = math.floor (account / 100)
 	local minor = account - major * 100
-	return connection_handler (account), string.format ("account:%d", major), minor
+	return connection_handler (account), string.format ("char-list:%d", major), minor
 end
 
 local function make_character_key (c)
 	local major = math.floor (c / 100)
 	local minor = c - major * 100
-	return connection_handler (c), string.format ("character:%d", major), minor
+	return connection_handler (c), string.format ("char-appearance:%d", major), minor
 end
 
 local function make_name_key (name)
-	return connection_handler (name), "character:name", name
+	return connection_handler (name), "char-name", name
 end
 
 function character.load (id)
@@ -80,17 +78,17 @@ function character.list (account)
 	return t
 end
 
-function character.create (account, name, race, class)
+function character.create (account, appearance)
 	local id = id_handler ()
-	local connection, key, field = make_name_key (name)
+	local connection, key, field = make_name_key (appearance.name)
 	if connection:hsetnx (key, field, id) == 0 then
 		return errno.NAME_ALREADY_USED
 	end
 
 	local field
 	connection, key, field = make_character_key (id)
-	local char = { id = id, name = name, race = race, class = class }
-	local v = packer.pack (char)
+	appearance.id = id
+	local v = packer.pack (appearance)
 	connection:hset (key, field, v)
 
 	local t = character.list (account)
@@ -107,7 +105,7 @@ function character.create (account, name, race, class)
 	v = packer.pack (list)
 	connection:hset (key, field, v)
 	
-	return char
+	return appearance
 end
 
 return character

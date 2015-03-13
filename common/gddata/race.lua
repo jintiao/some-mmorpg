@@ -1,6 +1,6 @@
 local race = {
-	{ name = "human", map = 1, pos = { 100, 100 } },
-	{ name = "orc", map = 2, pos = { 900, 900 } },
+	["human"] = { name = "human", home = "Stormwind City", pos = { x = 100, y = 10, z = 100 } },
+	["orc"] = { name = "orc", home = "Orgrimma", pos = { x = 900, y = 10, z = 900 } },
 }
 
 return race
