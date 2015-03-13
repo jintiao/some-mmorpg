@@ -1,4 +1,4 @@
-package.cpath = "../3rd/skynet/luaclib/?.so;../server/skynet-ex/luaclib/?.so"
+package.cpath = "../3rd/skynet/luaclib/?.so;../server/luaclib/?.so"
 package.path = "../3rd/skynet/lualib/?.lua;../common/?.lua"
 
 local socket = require "clientsocket"

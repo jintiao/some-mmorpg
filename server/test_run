@@ -1,0 +1,3 @@
+#!/bin/bash
+
+../3rd/skynet/skynet ./test/config
