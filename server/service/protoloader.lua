@@ -2,8 +2,8 @@ local skynet = require "skynet"
 local sprotoparser = require "sprotoparser"
 local sprotoloader = require "sprotoloader"
 
-local login_proto = require "login_proto"
-local game_proto = require "game_proto"
+local login_proto = require "proto.login_proto"
+local game_proto = require "proto.game_proto"
 
 skynet.start (function ()
 	sprotoloader.save (login_proto.c2s, 1)
