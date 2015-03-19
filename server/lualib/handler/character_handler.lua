@@ -66,7 +66,6 @@ function handler.register (u)
 end
 
 function handler.unregister (u)
-	print ("unregister")
 	assert (user == u)
 	user = nil
 	local t = u.REQUEST

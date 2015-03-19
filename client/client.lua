@@ -98,7 +98,7 @@ end
 function RESPONSE:auth (args)
 	print ("RESPONSE.auth")
 	user.account = args.account
-	local token = aes.encrypt (args.token, user.session_key)
+	local token = args.token
 
 	fd = assert (socket.connect (server, game_port))
 	print (string.format ("game server connected, fd = %d", fd))
@@ -106,7 +106,6 @@ function RESPONSE:auth (args)
 
 	host = sproto.new (game_proto.s2c):host "package"
 	request = host:attach (sproto.new (game_proto.c2s))
-	send_request ("character_list")
 end
 
 function RESPONSE:character_list (args)

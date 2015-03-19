@@ -4,8 +4,6 @@ local logger = require "logger"
 local sprotoloader = require "sprotoloader"
 
 local gameserver = {}
-
-local login_token = {}
 local handshake = {}
 
 function gameserver.forward (fd, agent)
@@ -37,8 +35,9 @@ function gameserver.start (gamed)
 		assert (type == "REQUEST")
 		assert (name == "login")
 		local account = assert (tonumber (args.account))
-		local secret = assert (login_token[account])
-		assert (secret == args.token)
+		local token = assert (args.token)
+		local ok = gamed.auth_handler (account, token)
+		assert (ok == true)
 		return account
 	end
 

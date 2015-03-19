@@ -35,6 +35,10 @@ function gamed.command_handler (cmd, ...)
 	return f (...)
 end
 
+function gamed.auth_handler (account, token)
+	return skynet.call (logind, "lua", "verify", account, token)	
+end
+
 function gamed.login_handler (fd, account)
 	local agent
 	if #pool == 0 then

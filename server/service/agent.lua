@@ -10,7 +10,6 @@ local database
 
 local host = sprotoloader.load (3):host "package"
 local send_request = host:attach (sprotoloader.load (4))
-local lock
 
 local user
 local client_fd
@@ -22,9 +21,6 @@ local function send_msg (fd, msg)
 end
 
 local function handle_request (name, args, response)
-	if not REQUEST then
-		lock (function () end)
-	end
 	local f = REQUEST[name]
 	if f then
 		local ok, ret = pcall (f, args)
@@ -64,10 +60,8 @@ function CMD.open (fd, account)
 		REQUEST = {}
 	}
 	client_fd = user.fd
-	lock (function ()
-		character_handler.register (user)
-		REQUEST = user.REQUEST
-	end)
+	character_handler.register (user)
+	REQUEST = user.REQUEST
 
 	local name = string.format ("agnet-%d", account)
 	logger.register (name)

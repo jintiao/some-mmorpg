@@ -9,7 +9,9 @@ local constant = require "constant"
 
 local loginserver = {}
 local slave = {}
+local nslave
 local connection = {}
+local active_account = {}
 
 local master
 local command_handler
@@ -42,7 +44,9 @@ local function launch_slave ()
 		socket.write (fd, package)
 	end
 
-	local function auth (fd, addr)
+	local CMD = {}
+
+	local function do_auth (fd, addr)
 		fd = assert (tonumber (fd))
 		connection[fd] = addr
 		connection_handler (fd, addr)
@@ -75,7 +79,7 @@ local function launch_slave ()
 		local realname = aes.decrypt (args.name, session_key)
 		assert (realname == account.name)
 		
-		local id = account.id
+		local id = tonumber (account.id)
 		if not id then
 			assert (args.password)
 			local password = aes.decrypt (args.password, session_key)
@@ -83,17 +87,37 @@ local function launch_slave ()
 		end
 		assert (id)
 
-		local token = skynet.call (master, "lua", "login", id, session_key)
+		local token = skynet.call (master, "lua", "login", id)
 		send_msg (fd, response ({ account = id, token = token }))
 	end
 
-	skynet.dispatch ("lua", function (_, _, fd, addr)
-		local ok, err =  pcall (auth, fd, addr)
+	function CMD.auth (fd, addr)
+		local ok, err =  pcall (do_auth, fd, addr)
 		if not ok then
 			logger.log (string.format ("connection %s (fd = %d) auth failed! err : %s", addr, fd, err))
 		end
 		close (fd)
-		skynet.ret ()
+	end
+
+	function CMD.save (account, token)
+		active_account[account] = token
+		skynet.timeout (100 * 60 * 30, function ()
+			if active_account[account] == token then
+				active_account[account] = nil
+				skynet.log (string.format ("account %d token timeout.", account))
+			end
+		end)
+	end
+
+	function CMD.verify (account, token)
+		if active_account[account] == token then
+			return true
+		end
+	end
+
+	skynet.dispatch ("lua", function (_, _, cmd, ...)
+		local f = assert (CMD[cmd])
+		skynet.retpack (f (...))
 	end)
 end
 
@@ -101,15 +125,25 @@ local function launch_master (ninstance)
 	for i = 1, ninstance do
 		table.insert (slave, skynet.newservice (SERVICE_NAME))
 	end
+	nslave = #slave
+
+	local function verify (account, token)
+		local s = slave[(account % nslave) + 1]
+		local ok = skynet.call (s, "lua", "verify", account, token)
+		return ok
+	end
 
 	skynet.dispatch ("lua", function (_, _, cmd, ...)
-		skynet.retpack (command_handler (cmd, ...))
+		if cmd == "verify" then
+			skynet.retpack (verify (...))
+		else
+			skynet.retpack (command_handler (cmd, ...))
+		end
 	end)
 end
 
 function loginserver.open (conf)
 	local balance = 1
-	local nslave = #slave
 	local host = conf.host or "0.0.0.0"
 	local port = tonumber (conf.port)
 	local sock = socket.listen (host, port)
@@ -120,7 +154,7 @@ function loginserver.open (conf)
 		if balance > nslave then
 			balance = 1
 		end
-		skynet.call (s, "lua", fd, addr)
+		skynet.call (s, "lua", "auth", fd, addr)
 	end)
 end
 
@@ -130,6 +164,12 @@ function loginserver.kick (fd)
 		close (fd)
 	end
 end
+
+function loginserver.save (account, token)
+	local s = slave[(account % nslave) + 1]
+	skynet.call (s, "lua", "save", account, token)
+end
+
 
 function loginserver.start (logind, conf)
 	local name = "." .. conf.name

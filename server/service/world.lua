@@ -20,14 +20,14 @@ skynet.start (function ()
 	local self = skynet.self ()
 	local gdd = sharedata.query "gdd"
 	local map = gdd.map
-	for _, conf in pairs (map) do
-		local name = conf.name
-		local t = {}
-		for k, v in pairs (conf) do
-			t[k] = v
+	for _, t in pairs (map) do
+		local conf = {}
+		for k, v in pairs (t) do
+			conf[k] = v
 		end
+		local name = conf.name
 		local s = skynet.newservice ("map", self)
-		skynet.call (s, "lua", "init", t)
+		skynet.call (s, "lua", "init", conf)
 		map_instance[name] = s
 	end
 	
