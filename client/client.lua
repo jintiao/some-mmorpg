@@ -114,10 +114,9 @@ function RESPONSE:character_list (args)
 	if not args or not args.character then
 		print "empty list"
 	else
-		for i = 1, #args.character do
-			local c = args.character[i]
-			print (string.format ("character index : %d", i))
-			for a, b in pairs (c) do
+		for k, v in pairs (args.character) do
+			print (string.format ("character index : %d", k))
+			for a, b in pairs (v) do
 				print ("", a, b)
 			end
 		end

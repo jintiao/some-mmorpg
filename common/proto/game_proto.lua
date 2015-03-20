@@ -17,7 +17,7 @@ game_proto.c2s = sparser.parse [[
 
 character_list 0 {
 	response {
-		character 0 : *appearance
+		character 0 : *appearance(id)
 	}
 }
 

@@ -2,6 +2,8 @@ local skynet = require "skynet"
 local config = require "config.system"
 
 skynet.start(function()
+	skynet.newservice ("debug_console", 8000)
+
 	skynet.uniqueservice ("gdd")
 	skynet.uniqueservice ("database")
 	skynet.uniqueservice ("protoloader")
