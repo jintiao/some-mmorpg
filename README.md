@@ -4,5 +4,6 @@
 
 完成度很低，已实现功能有：
 * 登陆
+* 角色创建
 
 详细说明请移步 [wiki](https://github.com/jintiao/some-mmorpg/wiki)
