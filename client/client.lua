@@ -9,7 +9,35 @@ local login_proto = require "proto.login_proto"
 local game_proto = require "proto.game_proto"
 local constant = require "constant"
 
-local user = { name = "helloworld", password = "123456" }
+local username = arg[1]
+local password = arg[2]
+
+local user = { name = arg[1], password = arg[2] }
+
+if not user.name then
+	local f = io.open ("anonymous", "r")
+	if not f then
+		f = io.open ("anonymous", "w")
+		local name = ""
+		math.randomseed (os.time ())
+		for i = 1, 16 do
+			name = name .. string.char (math.random (127))
+		end
+
+		user.name = name
+		f:write (name)
+		f:flush ()
+		f:close ()
+	else
+		user.name = f:read ("a")
+		f:close ()
+	end
+end
+
+if not user.password then
+	user.password = constant.default_password
+end
+
 local server = "127.0.0.1"
 local login_port = 9777
 local game_port = 9555
