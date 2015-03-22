@@ -28,4 +28,7 @@
 *.x86_64
 *.hex
 *.swp
+
+# other files
 var/
+client/anonymous
