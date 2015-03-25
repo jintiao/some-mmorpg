@@ -9,7 +9,7 @@ local gamed = ...
 local database
 
 local host = sprotoloader.load (3):host "package"
-local send_request = host:attach (sprotoloader.load (4))
+local pack_request = host:attach (sprotoloader.load (4))
 
 local user
 local client_fd
@@ -18,6 +18,15 @@ local REQUEST
 local function send_msg (fd, msg)
 	local package = string.pack (">s2", msg)
 	socket.write (fd, package)
+end
+
+local session = {}
+local session_id = 0
+local function send_request (name, args)
+	session_id = session_id + 1
+	local str = pack_request (name, args, session_id)
+	send_msg (client_fd, str)
+	session[session_id] = { name = name, args = args }
 end
 
 local function handle_request (name, args, response)
@@ -75,8 +84,11 @@ function CMD.close ()
 	skynet.call (gamed, "lua", "close", self)
 end
 
+function CMD.enter (map, pos)
+	send_request ("map_enter", { map = map, pos = pos })
+end
+
 skynet.start (function ()
-	lock = queue ()
 	skynet.dispatch ("lua", function (_, _, command, ...)
 		local f = assert (CMD[command])
 		skynet.retpack (f (...))

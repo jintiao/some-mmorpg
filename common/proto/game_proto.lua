@@ -2,7 +2,8 @@ local sparser = require "sprotoparser"
 
 local game_proto = {}
 
-game_proto.c2s = sparser.parse [[
+local types = [[
+
 .package {
 	type 0 : integer
 	session 1 : integer
@@ -15,6 +16,16 @@ game_proto.c2s = sparser.parse [[
 	class 3 : string
 }
 
+.position {
+	x 0 : integer
+	y 1 : integer
+	z 2 : integer
+	o 3 : integer
+}
+
+]]
+
+local c2s = [[
 character_list 0 {
 	response {
 		character 0 : *appearance(id)
@@ -38,14 +49,35 @@ character_pick 2 {
 	}
 }
 
-]]
-
-game_proto.s2c = sparser.parse [[
-.package {
-	type 0 : integer
-	session 1 : integer
+map_move 3 {
+	request {
+		pos 0 : position
+		dir 1 : integer
+	}
 }
 
 ]]
+
+local s2c = [[
+map_enter 0 {
+	request {
+		map 0 : string
+		pos 1 : position
+	}
+}
+
+aoi_move 1 {
+	request {
+		character 0 : integer
+		pos 1 : position
+		dir 2 : integer
+		speed 3 : integer
+	}
+}
+
+]]
+
+game_proto.c2s = sparser.parse (types .. c2s)
+game_proto.s2c = sparser.parse (types .. s2c)
 
 return game_proto

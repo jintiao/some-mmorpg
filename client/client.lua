@@ -1,6 +1,7 @@
-package.cpath = "../3rd/skynet/luaclib/?.so;../server/luaclib/?.so"
-package.path = "../3rd/skynet/lualib/?.lua;../common/?.lua"
+package.cpath = package.cpath .. ";../3rd/skynet/luaclib/?.so;../server/luaclib/?.so"
+package.path = package.path .. ";../3rd/skynet/lualib/?.lua;../common/?.lua"
 
+local print_r = require "print_r"
 local socket = require "clientsocket"
 local sproto = require "sproto"
 local srp = require "srp"
@@ -96,9 +97,7 @@ local function handle_request (name, args)
 	print ("request", name)
 
 	if args then
-		for k, v in pairs (args) do
-			print (k, v)
-		end
+		print_r (args)
 	end
 end
 
@@ -136,39 +135,16 @@ function RESPONSE:auth (args)
 	request = host:attach (sproto.new (game_proto.c2s))
 end
 
-function RESPONSE:character_list (args)
-	print ("RESPONSE:character_list")
-
-	if not args or not args.character then
-		print "empty list"
-	else
-		for k, v in pairs (args.character) do
-			print (string.format ("character index : %d", k))
-			for a, b in pairs (v) do
-				print ("", a, b)
-			end
-		end
-	end
-end
-
-function RESPONSE:character_create (args)
-	print ("RESPONSE:character_create")
-
-	if args.character then
-		for k, v in pairs (args.character) do
-			print (k, v)
-		end
-	elseif args.errno then
-		print ("error : ", args.errno)
-	end
-end
-
-
 local function handle_response (id, args)
 	local s = assert (session[id])
 	session[id] = nil
-	local f = assert (RESPONSE[s.name])
-	f (s.args, args)
+	local f = RESPONSE[s.name]
+	if f then
+		f (s.args, args)
+	else
+		print "response"
+		print_r (args)
+	end
 end
 
 local function handle_message (t, ...)

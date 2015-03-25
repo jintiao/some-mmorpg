@@ -29,8 +29,8 @@ function REQUEST.character_create (args)
 	for k, v in pairs (r.pos) do
 		pos[k] = v
 	end
-	local appearance = { name = name, race = race, class = class, map = r.home, pos = pos }
-	local ok, ch = skynet.call (database, "lua", "character", "create", user.account, appearance)
+	local character = { name = name, race = race, class = class, map = r.home, pos = pos }
+	local ok, ch = skynet.call (database, "lua", "character", "create", user.account, character)
 	assert (ok == true, ch)
 		
 	return { character = ch }
@@ -43,15 +43,14 @@ function REQUEST.character_pick (args)
 	local ok, success = skynet.call (database, "lua", "character", "check", user.account, id)
 	assert (ok and success, errno.CHARACTER_NOT_EXISTS)
 
-	local appearance
-	ok, appearance = skynet.call (database, "lua", "character", "load", id)
-	assert (ok and appearance, errno.INTERNAL_ERROR)
+	local character
+	ok, character = skynet.call (database, "lua", "character", "load", id)
+	assert (ok and character, errno.INTERNAL_ERROR)
 
 	local world = skynet.uniqueservice ("world")	
-	ok = skynet.call (world, "lua", "enter", appearance.id, appearance.map)
-	if ok then
-		handler.unregister (user)
-	end
+	skynet.call (world, "lua", "enter", character.id, character.map, character.pos)
+	
+	handler.unregister (user)
 end
 
 function handler.register (u)
