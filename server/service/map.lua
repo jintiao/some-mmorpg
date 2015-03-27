@@ -15,14 +15,15 @@ function CMD.init (c)
 	aoi.init (bbox)
 end
 
-function CMD.character_enter (character, pos, agent)
+function CMD.character_enter (agent, character, pos, radius)
 	logger.log (string.format ("character (%d) entering map (%s)", character, conf.name))
 	online_character[character] = agent
 	skynet.call (agent, "lua", "map_enter", conf.name, pos)
 
-	local ok, list = aoi.insert (character, pos)
-	if not ok then
+	local ok, list = aoi.insert (character, pos, radius)
+	if ok == false then
 		skynet.call (world, "lua", "kick", character)
+		return
 	end
 
 	skynet.call (agent, "lua", "map", "map_follow", list)

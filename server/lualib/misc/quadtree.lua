@@ -7,6 +7,7 @@ function quadtree.new (l, t, r, b)
 		top = t,
 		right = r,
 		bottom = b,
+		object = {},
 	}, mt)
 end
 
@@ -18,10 +19,6 @@ function quadtree:insert (id, x, y)
 			if v:insert (id, x, y) then return true end
 		end
 	else
-		if not self.object then
-			self.object = {}
-		end
-
 		self.object[id] = { x = x, y = y }
 
 		if #self.object >= 20 then
@@ -48,6 +45,22 @@ function quadtree:subdevide ()
 		end
 	end
 	self.object = nil
+end
+
+function quadtree:query (id, left, top, right, bottom, result)
+	if left > self.right or right < self.left or top > self.bottom or bottom < self.top then return end
+
+	if self.children then
+		for _, v in pairs (self.children) do
+			v:query (id, left, top, right, bottom, result)
+		end
+	else
+		for k, v in pairs (self.object) do
+			if k ~= id and v.x > left and v.x < right and v.y > top and v.y < bottom then
+				table.insert (result, k)
+			end
+		end
+	end
 end
 
 return quadtree

@@ -105,6 +105,7 @@ function CMD.map (name, ...)
 	if not ok then
 		logger.warning (string.format ("handle message failed : %s", name), ret) 
 	end
+	return ret
 end
 
 skynet.start (function ()

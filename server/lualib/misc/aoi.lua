@@ -11,22 +11,20 @@ local STATE_MOVING = 2
 
 function aoi.init (bbox)
 	qtree = quadtree.new (bbox.left, bbox.top, bbox.right, bbox.bottom)
-	print ("aoi.init")
-	print_r (qtree)
 end
 
-function aoi.insert (id, pos)
+function aoi.insert (id, pos, radius)
 	if object[id] then return false end
 	
-	local ok, list = qtree:insert (id, pos.x, pos.z)
-	if not ok then return false end
+	local ok = qtree:insert (id, pos.x, pos.z)
+	if ok == false then return false end
 
-	object[id] = { pos = pos, list = list, state = STATE_STILL }
+	local result = {}
+	qtree:query (id, pos.x - radius, pos.z - radius, pos.x + radius, pos.z + radius, result)
+
+	object[id] = { pos = pos, list = result }
 	
-	print ("aoi.insert")
-	print_r (qtree)
-
-	return ok, list
+	return ok, result
 end
 
 return aoi

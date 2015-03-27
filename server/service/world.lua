@@ -15,7 +15,7 @@ function CMD.kick (character)
 	end
 end
 
-function CMD.character_enter (agent, character, map, pos)
+function CMD.character_enter (agent, character, map, pos, radius)
 	if online_character[character] ~= nil then
 		logger.log (string.format ("multiple login detected, character %d", character))
 		CMD.kick (character)
@@ -32,7 +32,7 @@ function CMD.character_enter (agent, character, map, pos)
 		return
 	end
 		
-	skynet.call (m, "lua", "character_enter", character, pos, agent)
+	skynet.call (m, "lua", "character_enter", agent, character, pos, radius)
 end
 
 skynet.start (function ()

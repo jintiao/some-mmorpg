@@ -48,7 +48,7 @@ function REQUEST.character_pick (args)
 	assert (ok and character, errno.INTERNAL_ERROR)
 
 	local world = skynet.uniqueservice ("world")	
-	skynet.call (world, "lua", "character_enter", character.id, character.map, character.pos)
+	skynet.call (world, "lua", "character_enter", character.id, character.map, character.pos, 20) -- TODO : radius from character attribute
 	
 	handler.unregister (user)
 end

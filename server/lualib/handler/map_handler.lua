@@ -1,4 +1,5 @@
 local skynet = require "skynet"
+local print_r = require "print_r"
 
 local handler = {}
 local REQUEST = {}
@@ -7,6 +8,7 @@ local user
 
 function REQUEST.map_follow (list)
 	print ("map_follow")
+	print_r (list)
 end
 
 function handler.register (u)
