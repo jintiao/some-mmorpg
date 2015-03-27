@@ -7,15 +7,32 @@ local CMD = {}
 local map_instance = {}
 local online_character = {}
 
-function CMD.enter (agent, character, map, pos)
-	logger.log (string.format ("character (%d) try to enter (%s), from agent (%d)", character, map, agent))
+function CMD.kick (character)
+	local a = online_character[character]
+	if a then
+		skynet.call (a, "lua", "kick")
+		online_character[character] = nil
+	end
+end
+
+function CMD.character_enter (agent, character, map, pos)
+	if online_character[character] ~= nil then
+		logger.log (string.format ("multiple login detected, character %d", character))
+		CMD.kick (character)
+	end
+
+	online_character[character] = agent
+	logger.log (string.format ("character (%d) enter world", character))
+	skynet.call (agent, "lua", "world_enter")
 	
 	local m = map_instance[map]
 	if not m then
 		logger.warning (string.format ("character (%d) trying to enter a none exist map (%s)", character, map))
-	else
-		skynet.call (m, "lua", "enter", character, pos, agent)
+		CMD.kick (character)
+		return
 	end
+		
+	skynet.call (m, "lua", "character_enter", character, pos, agent)
 end
 
 skynet.start (function ()

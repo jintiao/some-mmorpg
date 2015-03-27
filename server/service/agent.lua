@@ -4,6 +4,8 @@ local logger = require "logger"
 local sprotoloader = require "sprotoloader"
 local socket = require "socket"
 local character_handler = require "handler.character_handler"
+local world_handler = require "handler.world_handler"
+local map_handler = require "handler.map_handler"
 
 local gamed = ...
 local database
@@ -69,8 +71,8 @@ function CMD.open (fd, account)
 		REQUEST = {}
 	}
 	client_fd = user.fd
-	character_handler.register (user)
 	REQUEST = user.REQUEST
+	character_handler.register (user)
 
 	local name = string.format ("agnet-%d", account)
 	logger.register (name)
@@ -84,8 +86,25 @@ function CMD.close ()
 	skynet.call (gamed, "lua", "close", self)
 end
 
-function CMD.enter (map, pos)
+function CMD.kick ()
+	logger.debug (string.format ("agent %d kicked", self))
+end
+
+function CMD.world_enter ()
+	world_handler.register (user)
+end
+
+function CMD.map_enter (map, pos)
+	map_handler.register (user)
 	send_request ("map_enter", { map = map, pos = pos })
+end
+
+function CMD.map (name, ...)
+	local f = assert (REQUEST[name])
+	local ok, ret = pcall (f, ...)
+	if not ok then
+		logger.warning (string.format ("handle message failed : %s", name), ret) 
+	end
 end
 
 skynet.start (function ()

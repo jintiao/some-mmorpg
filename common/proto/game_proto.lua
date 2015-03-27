@@ -77,6 +77,7 @@ aoi_move 1 {
 
 ]]
 
+game_proto.types = sparser.parse (types)
 game_proto.c2s = sparser.parse (types .. c2s)
 game_proto.s2c = sparser.parse (types .. s2c)
 
