@@ -1,4 +1,5 @@
 local skynet = require "skynet"
+local logger = require "logger"
 local print_r = require "print_r"
 
 local handler = {}
@@ -7,8 +8,13 @@ local REQUEST = {}
 local user
 
 function REQUEST.map_follow (list)
-	print ("map_follow")
+	logger.log ("map_follow")
 	print_r (list)
+end
+
+function REQUEST.map_notify (character, agent)
+	logger.log ("map_notify")
+	print (character, agent)
 end
 
 function handler.register (u)

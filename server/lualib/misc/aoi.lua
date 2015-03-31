@@ -5,9 +5,7 @@ local aoi = {}
 
 local object = {}
 local qtree
-
-local STATE_STILL = 1
-local STATE_MOVING = 2
+local max_radius = 0
 
 function aoi.init (bbox)
 	qtree = quadtree.new (bbox.left, bbox.top, bbox.right, bbox.bottom)
@@ -19,12 +17,36 @@ function aoi.insert (id, pos, radius)
 	local ok = qtree:insert (id, pos.x, pos.z)
 	if ok == false then return false end
 
-	local result = {}
-	qtree:query (id, pos.x - radius, pos.z - radius, pos.x + radius, pos.z + radius, result)
+	if radius > max_radius then
+		max_radius = radius
+	end
 
-	object[id] = { pos = pos, list = result }
+	local result = {}
+	qtree:query (id, pos.x - max_radius, pos.z - max_radius, pos.x + max_radius, pos.z + max_radius, result)
+
+	local interest_list = {}
+	local notify_list = {}
+
+	local sr = radius * radius
+	for i = 1, #result do
+		local cid = result[i]
+		local c = object[cid]
+		if c then
+			local src = c.radius * c.radius
+			local sd = (c.pos.x - pos.x) * (c.pos.x - pos.x) + (c.pos.z - pos.z) * (c.pos.z - pos.z)
+			if sd < sr then
+				table.insert (interest_list, cid)
+			end
+			if sd < src then
+				table.insert (notify_list, cid)
+				table.insert (c.interest_list, id)
+			end
+		end
+	end
+
+	object[id] = { id = id, pos = pos, radius = radius, interest_list = interest_list }
 	
-	return ok, result
+	return ok, interest_list, notify_list
 end
 
 return aoi
