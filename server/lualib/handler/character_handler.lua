@@ -2,20 +2,18 @@ local skynet = require "skynet"
 local errno = require "errno"
 local sharedata = require "sharedata"
 
-local handler = {}
-local REQUEST = {}
-
 local database
 local gdd
-local user
 
-function REQUEST.character_list ()
-	local ok, list = skynet.call (database, "lua", "character", "list", user.account)
+local REQUEST = {}
+
+function REQUEST:character_list ()
+	local ok, list = skynet.call (database, "lua", "character", "list", self.account)
 	assert (ok, list)
 	return { character = list }
 end
 
-function REQUEST.character_create (args)
+function REQUEST:character_create (args)
 	assert (args, errno.INVALID_ARGUMENT)
 	local c = args.character
 	assert (c, errno.INVALID_ARGUMENT)
@@ -30,44 +28,41 @@ function REQUEST.character_create (args)
 		pos[k] = v
 	end
 	local character = { name = name, race = race, class = class, map = r.home, pos = pos }
-	local ok, ch = skynet.call (database, "lua", "character", "create", user.account, character)
+	local ok, ch = skynet.call (database, "lua", "character", "create", self.account, character)
 	assert (ok == true, ch)
 		
 	return { character = ch }
 end
 
-function REQUEST.character_pick (args)
+function REQUEST:character_pick (args)
 	assert (args, errno.INVALID_ARGUMENT)
 	local id = assert (args.id, errno.INVALID_ARGUMENT)
 
-	local ok, success = skynet.call (database, "lua", "character", "check", user.account, id)
+	local ok, success = skynet.call (database, "lua", "character", "check", self.account, id)
 	assert (ok and success, errno.CHARACTER_NOT_EXISTS)
 
 	local character
 	ok, character = skynet.call (database, "lua", "character", "load", id)
 	assert (ok and character, errno.INTERNAL_ERROR)
 
-	local world = skynet.uniqueservice ("world")	
-	skynet.call (world, "lua", "character_enter", character.id, character.map, character.pos, 20) -- TODO : radius from character attribute
-	
-	handler.unregister (user)
+	local world = skynet.uniqueservice ("world")
+	skynet.call (world, "lua", "character_enter", character.id, character.map, character.pos)
 end
 
-function handler.register (u)
+local handler = {}
+
+function handler:register ()
 	database = skynet.uniqueservice ("database")
 	gdd = sharedata.query "gdd"
-	user = u
 
-	local t = user.REQUEST
+	local t = self.REQUEST
 	for k, v in pairs (REQUEST) do
 		t[k] = v
 	end
 end
 
-function handler.unregister (u)
-	assert (user == u)
-	user = nil
-	local t = u.REQUEST
+function handler:unregister ()
+	local t = self.REQUEST
 	for k, _ in pairs (REQUEST) do
 		t[k] = nil
 	end

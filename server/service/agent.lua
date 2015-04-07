@@ -2,16 +2,26 @@ local skynet = require "skynet"
 local queue = require "skynet.queue"
 local logger = require "logger"
 local sprotoloader = require "sprotoloader"
+local sharemap = require "sharemap"
 local socket = require "socket"
 local character_handler = require "handler.character_handler"
 local world_handler = require "handler.world_handler"
 local map_handler = require "handler.map_handler"
+local aoi_handler = require "handler.aoi_handler"
 
 local gamed = ...
 local database
 
 local host = sprotoloader.load (3):host "package"
 local pack_request = host:attach (sprotoloader.load (4))
+
+--[[
+.user {
+	fd : integer
+	account : integer
+	character : character
+}
+]]
 
 local user
 local client_fd
@@ -34,7 +44,7 @@ end
 local function handle_request (name, args, response)
 	local f = REQUEST[name]
 	if f then
-		local ok, ret = pcall (f, args)
+		local ok, ret = pcall (f, user, args)
 		if not ok then
 			logger.warning (string.format ("handle message failed : %s", name), ret) 
 		else
@@ -64,7 +74,7 @@ skynet.register_protocol {
 
 local CMD = {}
 
-function CMD.open (fd, account)
+function CMD.open (from, fd, account)
 	user = { 
 		fd = fd, 
 		account = account,
@@ -74,7 +84,7 @@ function CMD.open (fd, account)
 	REQUEST = user.REQUEST
 	character_handler.register (user)
 
-	local name = string.format ("agnet-%d", account)
+	local name = string.format ("agnet-a-%d", account)
 	logger.register (name)
 	logger.debug (string.format ("agent %d opened", skynet.self ()))
 end
@@ -90,28 +100,41 @@ function CMD.kick ()
 	logger.debug (string.format ("agent %d kicked", self))
 end
 
-function CMD.world_enter ()
+function CMD.world_enter (world)
+	logger.debug (string.format ("world(%d) entered", world))
+
+	user.world = world
+	character_handler.unregister (user)
 	world_handler.register (user)
 end
 
-function CMD.map_enter (map, pos)
-	map_handler.register (user)
-	send_request ("map_enter", { map = map, pos = pos })
-end
+function CMD.map_enter (map, map_name, character, pos)
+	local name = string.format ("agnet-c-%d", character)
+	logger.register (name)
+	logger.debug (string.format ("agent %d renamed", skynet.self ()))
+	logger.debug (string.format ("map %s(%d) entered", map_name, map))
 
-function CMD.map (name, ...)
-	local f = assert (REQUEST[name])
-	local ok, ret = pcall (f, ...)
-	if not ok then
-		logger.warning (string.format ("handle message failed : %s", name), ret) 
-	end
-	return ret
+	user.character = { id = character, pos = pos }
+
+	map_handler.register (user)
+	aoi_handler.register (user)
+
+	send_request ("map_enter", { map = map_name, pos = pos })
 end
 
 skynet.start (function ()
-	skynet.dispatch ("lua", function (_, _, command, ...)
-		local f = assert (CMD[command])
-		skynet.retpack (f (...))
+	skynet.dispatch ("lua", function (_, from, command, ...)
+		local f = CMD[command]
+		if f then
+			skynet.retpack (f (from, ...))
+		else
+			f = assert (REQUEST[command])
+			local ok, ret = pcall (f, user, ...)
+			if not ok then
+				logger.warning (string.format ("handle message failed : %s", command), ret) 
+			end
+			skynet.retpack (ret)
+		end
 	end)
 end)
 

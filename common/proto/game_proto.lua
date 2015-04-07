@@ -23,6 +23,10 @@ local types = [[
 	o 3 : integer
 }
 
+.character {
+	id 0 : integer
+}
+
 ]]
 
 local c2s = [[

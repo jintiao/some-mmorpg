@@ -7,6 +7,7 @@ local map = {
 			right = 1000,
 			bottom = 1000,
 		},
+		radius = 20,
 	},
 	["Orgrimmar"] = { 
 		name = "Orgrimmar",
@@ -16,6 +17,7 @@ local map = {
 			right = 4000,
 			bottom = 4000,
 		},
+		radius = 25,
 	},
 }
 

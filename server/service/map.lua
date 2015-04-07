@@ -10,15 +10,15 @@ local CMD = {}
 
 function CMD.init (c)
 	conf = c
-	aoi.init (conf.bbox)
+	aoi.init (conf.bbox, conf.radius)
 end
 
-function CMD.character_enter (agent, character, pos, radius)
+function CMD.character_enter (agent, character, pos)
 	logger.log (string.format ("character (%d) entering map (%s)", character, conf.name))
 	online_character[character] = agent
-	skynet.call (agent, "lua", "map_enter", conf.name, pos)
+	skynet.call (agent, "lua", "map_enter", conf.name, character, pos)
 
-	local ok, interest_list, notify_list = aoi.insert (character, pos, radius)
+	local ok, interest_list, notify_list = aoi.insert (character, pos)
 	if ok == false then
 		skynet.call (world, "lua", "kick", character)
 		return
@@ -29,12 +29,13 @@ function CMD.character_enter (agent, character, pos, radius)
 		local c = interest_list[i]
 		t[c] = online_character[c]
 	end
-	skynet.call (agent, "lua", "map", "map_follow", t)
+	skynet.call (agent, "lua", "aoi_add", t)
 
+	local ct = { [character] = agent }
 	for i = 1, #notify_list do
 		local a = online_character[notify_list[i]]
 		if a then
-			skynet.call (a, "lua", "map", "map_notify", character, agent)
+			skynet.call (a, "lua", "aoi_add", ct)
 		end
 	end
 end
