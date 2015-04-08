@@ -10,10 +10,16 @@ local types = [[
 }
 
 .appearance {
-	id 0 : integer
 	name 1 : string
 	race 2 : string
 	class 3 : string
+}
+
+.overview {
+	id 0 : integer
+	appearance 1 : appearance
+	map 2 : string
+	level 3 : integer
 }
 
 .position {
@@ -23,8 +29,14 @@ local types = [[
 	o 3 : integer
 }
 
+.detail {
+	pos 0 : position
+	exp 1 : integer
+}
+
 .character {
-	id 0 : integer
+	overview 0 : overview
+	detail 1 : detail
 }
 
 ]]
@@ -32,7 +44,7 @@ local types = [[
 local c2s = [[
 character_list 0 {
 	response {
-		character 0 : *appearance(id)
+		character 0 : *overview(id)
 	}
 }
 
@@ -42,7 +54,7 @@ character_create 1 {
 	}
 
 	response {
-		character 0 : appearance
+		character 0 : overview
 		errno 1 : integer
 	}
 }
@@ -50,6 +62,11 @@ character_create 1 {
 character_pick 2 {
 	request {
 		id 0 : integer
+	}
+
+	response {
+		character 0 : character
+		errno 1 : integer
 	}
 }
 

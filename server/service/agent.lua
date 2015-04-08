@@ -20,6 +20,9 @@ local pack_request = host:attach (sprotoloader.load (4))
 	fd : integer
 	account : integer
 	character : character
+
+	world : integer
+	map : integer
 }
 ]]
 
@@ -113,8 +116,11 @@ function CMD.map_enter (map, map_name, character, pos)
 	logger.register (name)
 	logger.debug (string.format ("agent %d renamed", skynet.self ()))
 	logger.debug (string.format ("map %s(%d) entered", map_name, map))
+	
+	user.map = map
 
-	user.character = { id = character, pos = pos }
+	local c = { id = character, pos = pos }
+	user.character_writer = sharemap.writer ("character", user.character)
 
 	map_handler.register (user)
 	aoi_handler.register (user)

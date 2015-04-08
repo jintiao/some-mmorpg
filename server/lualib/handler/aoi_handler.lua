@@ -13,16 +13,19 @@ function REQUEST:aoi_add (list)
 	for _, a in pairs (list) do
 		skynet.fork (function ()
 			local r = skynet.call (a, "lua", "aoi_subscribe", s)
+			local reader = sharemap.reader ("character", r)
+			reader:update ()
 			print "aoi reader"
-			print_r (r)
+			print_r (reader)
 		end)
 	end
 end
 
 local subscriber = {}
 function REQUEST:aoi_subscribe (from)
+	logger.log ("aoi_subscribe from", from)
 	table.insert (subscriber, from)
-	return self.character
+	return self.character_writer:copy ()
 end
 
 local handler = {}

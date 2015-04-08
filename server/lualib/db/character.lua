@@ -2,21 +2,6 @@ local logger = require "logger"
 local packer = require "db.packer"
 local errno = require "errno"
 
---[[
-char-list:0
-	1 : { 222, 333 }
-
-char-appearance:2
-	22 : { id = 222, name = "hello", race = "human", class = "warrior" map = "Stormwind City" pos = {100, 100} }
-
-char-appearance:3
-	33 : { id = 333, name = "world", race = "human", class = "mage" map = "Stormwind City" pos = {100, 100} }
-
-char-name
-	hello : 222
-	world : 333
-]]--
-
 local character = {}
 local connection_handler
 local id_handler
@@ -26,51 +11,67 @@ function character.init (ch, ih)
 	id_handler = ih
 end
 
-local function make_account_key (account)
+local function make_list_key (account)
 	local major = math.floor (account / 100)
 	local minor = account - major * 100
 	return connection_handler (account), string.format ("char-list:%d", major), minor
 end
 
-local function make_character_key (c)
+local function make_overview_key (c)
 	local major = math.floor (c / 100)
 	local minor = c - major * 100
-	return connection_handler (c), string.format ("char-appearance:%d", major), minor
+	return connection_handler (c), string.format ("char-overview:%d", major), minor
+end
+
+local function make_detail_key (c)
+	local major = math.floor (c / 100)
+	local minor = c - major * 100
+	return connection_handler (c), string.format ("char-detail:%d", major), minor
 end
 
 local function make_name_key (name)
 	return connection_handler (name), "char-name", name
 end
 
+local function load_overview (id)
+	local connection, key, field = make_overview_key (id)
+	local t = connection:hget (key, field)
+	if not t then return end
+	return packer.unpack (t)
+end
+
+local function load_detail (id)
+	local connection, key, field = make_detail_key (id)
+	local t = connection:hget (key, field)
+	if not t then return end
+	return packer.unpack (t)
+end
+
 function character.load (id)
-	local connection, key, field = make_character_key (id)
-	local v = connection:hget (key, field)
-	if not v then return end
-	local t = packer.unpack (v)
+	local t = {
+		overview = load_overview (id),
+		detail = load_detail (id),
+	}
 	return t
 end
 
-function character.check (account, id)
-	local connection, key, field = make_account_key (account)
+local function load_list (account)
+	local connection, key, field = make_list_key (account)
 	local v = connection:hget (key, field)
-	if not v then return end
-	local list = packer.unpack (v)
-	for i = 1, #list do
-		if list[i] == id then
-			return true
-		end
-	end
-	return false
+	if not v then return {} end
+	return packer.unpack (v)
+end
+
+function character.check (account, id)
+	local list = load_list (account)
+	return (list[tostring (id)] ~= nil)
 end
 
 function character.list (account)
-	local connection, key, field = make_account_key (account)
-	local v = connection:hget (key, field)
-	if not v then return end
-	local list = packer.unpack (v)
+	local list = load_list (account)
 	local t = {}
-	for i = 1, #list do
-		local c = character.load (list[i])
+	for _, id in pairs (list) do
+		local c = load_overview (id)
 		if c then
 			table.insert (t, c)
 		end
@@ -78,34 +79,31 @@ function character.list (account)
 	return t
 end
 
-function character.create (account, appearance)
+function character.create (account, char)
 	local id = id_handler ()
-	local connection, key, field = make_name_key (appearance.name)
+	local connection, key, field = make_name_key (char.overview.appearance.name)
 	if connection:hsetnx (key, field, id) == 0 then
 		return errno.NAME_ALREADY_USED
 	end
 
-	local field
-	connection, key, field = make_character_key (id)
-	appearance.id = id
-	local v = packer.pack (appearance)
+	char.overview.id = id
+
+	connection, key, field = make_overview_key (id)
+	local v = packer.pack (char.overview)
 	connection:hset (key, field, v)
 
-	local t = character.list (account)
-	if not t then
-		t = {}
-	end
+	connection, key, field = make_detail_key (id)
+	local v = packer.pack (char.detail)
+	connection:hset (key, field, v)
 
-	local list = {}
-	for i = 1, #t do
-		table.insert (list, t[i].id)
-	end
-	table.insert (list, id)
-	connection, key, field = make_account_key (account)
+	local list = load_list (account)
+	list[id] = id
+
+	connection, key, field = make_list_key (account)
 	v = packer.pack (list)
 	connection:hset (key, field, v)
 	
-	return appearance
+	return char
 end
 
 return character
