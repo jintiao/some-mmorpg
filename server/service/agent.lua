@@ -131,6 +131,8 @@ function CMD.kick ()
 end
 
 function CMD.world_enter (world)
+	local name = string.format ("agnet%d-c-%d", skynet.self (), user.character.overview.id)
+	logger.register (name)
 	logger.debug (string.format ("world(%d) entered", world))
 
 	user.world = world
@@ -139,8 +141,6 @@ function CMD.world_enter (world)
 end
 
 function CMD.map_enter (map, map_name, character, pos)
-	local name = string.format ("agnet%d-c-%d", skynet.self (), character)
-	logger.register (name)
 	logger.debug (string.format ("map %s(%d) entered", map_name, map))
 	
 	user.map = map
