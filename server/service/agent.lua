@@ -27,36 +27,57 @@ local pack_request = host:attach (sprotoloader.load (4))
 ]]
 
 local user
-local client_fd
-local REQUEST
 
 local function send_msg (fd, msg)
 	local package = string.pack (">s2", msg)
 	socket.write (fd, package)
 end
 
+local user_fd
 local session = {}
 local session_id = 0
 local function send_request (name, args)
 	session_id = session_id + 1
 	local str = pack_request (name, args, session_id)
-	send_msg (client_fd, str)
+	send_msg (user_fd, str)
 	session[session_id] = { name = name, args = args }
 end
 
+local function kick_self ()
+	skynet.call (gamed, "lua", "kick", skynet.self (), user_fd)
+end
+
+local last_heartbeat_time
+local HEARTBEAT_TIME_MAX = 0 -- 60 * 100
+local function heartbeat_check ()
+	if HEARTBEAT_TIME_MAX <= 0 or not user_fd then return end
+
+	local t = last_heartbeat_time + HEARTBEAT_TIME_MAX - skynet.now ()
+	if t <= 0 then
+		logger.warning ("heatbeat check failed")
+		kick_self ()
+	else
+		skynet.timeout (t, heartbeat_check)
+	end
+end
+
+local REQUEST
 local function handle_request (name, args, response)
 	local f = REQUEST[name]
 	if f then
 		local ok, ret = pcall (f, user, args)
 		if not ok then
 			logger.warning (string.format ("handle message failed : %s", name), ret) 
+			kick_self ()
 		else
+			last_heartbeat_time = skynet.now ()
 			if response and ret then
-				send_msg (client_fd, response (ret))
+				send_msg (user_fd, response (ret))
 			end
 		end
 	else
 		logger.warning (string.format ("unhandled message : %s", name)) 
+		kick_self ()
 	end
 end
 
@@ -77,30 +98,36 @@ skynet.register_protocol {
 
 local CMD = {}
 
+
 function CMD.open (from, fd, account)
+	local name = string.format ("agnet%d-a-%d", skynet.self (), account)
+	logger.register (name)
+	logger.debug ("agent opened")
+
 	user = { 
 		fd = fd, 
 		account = account,
 		REQUEST = {}
 	}
-	client_fd = user.fd
+	user_fd = user.fd
 	REQUEST = user.REQUEST
 	character_handler.register (user)
 
-	local name = string.format ("agnet-a-%d", account)
-	logger.register (name)
-	logger.debug (string.format ("agent %d opened", skynet.self ()))
+	last_heartbeat_time = skynet.now ()
+	heartbeat_check ()
 end
 
 function CMD.close ()
-	local self = skynet.self ()
-	logger.debug (string.format ("agent %d closed", self))
+	logger.debug ("agent closed")
 	user = nil
+	user_fd = nil
+	REQUEST = nil
 	skynet.call (gamed, "lua", "close", self)
 end
 
 function CMD.kick ()
-	logger.debug (string.format ("agent %d kicked", self))
+	logger.debug ("agent kicked")
+	skynet.call (gamed, "lua", "kick", skynet.self (), user_fd)
 end
 
 function CMD.world_enter (world)
@@ -112,9 +139,8 @@ function CMD.world_enter (world)
 end
 
 function CMD.map_enter (map, map_name, character, pos)
-	local name = string.format ("agnet-c-%d", character)
+	local name = string.format ("agnet%d-c-%d", skynet.self (), character)
 	logger.register (name)
-	logger.debug (string.format ("agent %d renamed", skynet.self ()))
 	logger.debug (string.format ("map %s(%d) entered", map_name, map))
 	
 	user.map = map
@@ -138,6 +164,7 @@ skynet.start (function ()
 			local ok, ret = pcall (f, user, ...)
 			if not ok then
 				logger.warning (string.format ("handle message failed : %s", command), ret) 
+				kick_self ()
 			end
 			skynet.retpack (ret)
 		end

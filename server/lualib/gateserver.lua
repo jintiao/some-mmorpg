@@ -27,7 +27,6 @@ end
 function gateserver.close_client (fd)
 	local c = connection[fd]
 	if c then
-		connection[fd] = false
 		socketdriver.close (fd)
 	end
 end

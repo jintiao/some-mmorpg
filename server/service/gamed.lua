@@ -31,6 +31,10 @@ function gamed.command_handler (cmd, ...)
 		table.insert (pool, agent)
 	end
 
+	function CMD.kick (agent, fd)
+		gameserver.kick (fd)
+	end
+
 	local f = assert (CMD[cmd])
 	return f (...)
 end

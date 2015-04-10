@@ -15,7 +15,7 @@ function CMD.kick (character)
 	end
 end
 
-function CMD.character_enter (agent, character, map, pos)
+function CMD.character_enter (agent, character)
 	if online_character[character] ~= nil then
 		logger.log (string.format ("multiple login detected, character %d", character))
 		CMD.kick (character)
@@ -24,15 +24,6 @@ function CMD.character_enter (agent, character, map, pos)
 	online_character[character] = agent
 	logger.log (string.format ("character (%d) enter world", character))
 	skynet.call (agent, "lua", "world_enter")
-	
-	local m = map_instance[map]
-	if not m then
-		logger.warning (string.format ("character (%d) trying to enter a none exist map (%s)", character, map))
-		CMD.kick (character)
-		return
-	end
-		
-	skynet.call (m, "lua", "character_enter", agent, character, pos)
 end
 
 skynet.start (function ()

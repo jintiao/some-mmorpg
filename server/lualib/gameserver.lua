@@ -10,6 +10,10 @@ function gameserver.forward (fd, agent)
 	gateserver.forward (fd, agent)
 end
 
+function gameserver.kick (fd)
+	gateserver.close_client (fd)
+end
+
 function gameserver.start (gamed)
 	local handler = {}
 

@@ -60,7 +60,7 @@ function REQUEST:character_pick (args)
 	self.character = character
 
 	local world = skynet.uniqueservice ("world")
-	skynet.call (world, "lua", "character_enter", character.overview.id, character.overview.map, character.detail.pos)
+	skynet.call (world, "lua", "character_enter", character.overview.id)
 
 	return { character = character }
 end
