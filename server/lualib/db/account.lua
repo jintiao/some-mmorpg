@@ -45,12 +45,12 @@ function account.create (name, password)
 	local id = id_handler ()
 	local connection, key = make_key (name)
 	if connection:hsetnx (key, "account", id) == 0 then
-		return
+		error (errno.ACCOUNT_EXISTS)
 	end
 
 	local salt, verifier = srp.create_verifier (name, password)
 	if connection:hmset (key, "salt", salt, "verifier", verifier) == 0 then
-		return
+		error (errno.INTERNAL_ERROR)
 	end
 
 	return id

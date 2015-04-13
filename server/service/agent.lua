@@ -131,7 +131,7 @@ function CMD.kick ()
 end
 
 function CMD.world_enter (world)
-	local name = string.format ("agnet%d-c-%d", skynet.self (), user.character.overview.id)
+	local name = string.format ("agnet%d-c-%d", skynet.self (), user.character.id)
 	logger.register (name)
 	logger.debug (string.format ("world(%d) entered", world))
 

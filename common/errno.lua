@@ -5,6 +5,7 @@ local errno = {
 	INVALID_ARGUMENT = 3,
 	UNSUPPORTED_DATABASE_METHOD = 4,
 	CHARACTER_NOT_EXISTS = 5,
+	ACCOUNT_EXISTS = 6,
 }
 
 return errno

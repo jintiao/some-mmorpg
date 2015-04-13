@@ -9,17 +9,11 @@ local types = [[
 	session 1 : integer
 }
 
-.appearance {
-	name 1 : string
-	race 2 : string
-	class 3 : string
-}
-
-.overview {
-	id 0 : integer
-	appearance 1 : appearance
-	map 2 : string
-	level 3 : integer
+.general {
+	name 0 : string
+	race 1 : string
+	class 2 : string
+	map 3 : string
 }
 
 .position {
@@ -29,14 +23,51 @@ local types = [[
 	o 3 : integer
 }
 
-.detail {
-	pos 0 : position
-	exp 1 : integer
+.movement {
+	mode 0 : integer
+	pos 1 : position
+}
+
+.attribute {
+	hp 0 : integer
+	level 1 : integer
+	exp 2 : integer
+}
+
+.character_agent {
+	id 0 : integer
+	general 1 : general
+	attribute 2 : attribute
+	movement 3 : movement
 }
 
 .character {
-	overview 0 : overview
-	detail 1 : detail
+	id 0 : integer
+	general 1 : general
+	attribute 2 : attribute
+	movement 3 : movement
+}
+
+.attribute_overview {
+	level 0 : integer
+}
+
+.character_overview {
+	id 0 : integer
+	general 1 : general
+	attribute 2 : attribute_overview
+}
+
+.attribute_aoi {
+	hp 0 : integer
+	level 1 : integer
+}
+
+.character_aoi {
+	id 0 : integer
+	general 1 : general
+	attribute 2 : attribute_aoi
+	movement 3 : movement
 }
 
 ]]
@@ -44,17 +75,17 @@ local types = [[
 local c2s = [[
 character_list 0 {
 	response {
-		character 0 : *overview(id)
+		character 0 : *character_overview(id)
 	}
 }
 
 character_create 1 {
 	request {
-		character 0 : appearance
+		character 0 : general
 	}
 
 	response {
-		character 0 : overview
+		character 0 : character_overview
 		errno 1 : integer
 	}
 }
