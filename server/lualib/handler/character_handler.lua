@@ -6,6 +6,7 @@ local dbpacker = require "db.packer"
 local database
 local gdd
 
+local handler = {}
 local REQUEST = {}
 
 local function load_list (account)
@@ -31,20 +32,14 @@ function REQUEST:character_list ()
 	return { character = character }
 end
 
-function REQUEST:character_create (args)
-	assert (args, errno.INVALID_ARGUMENT)
-	local c = args.character
-	assert (c, errno.INVALID_ARGUMENT)
-	local name, race, class = c.name, c.race, c.class
-	assert (name and #name < 24, errno.INVALID_ARGUMENT)
-	assert (race and gdd.race[race], errno.INVALID_ARGUMENT)
-	assert (class and gdd.class[class], errno.INVALID_ARGUMENT)
+local function create (id, name, race, class)
+	if not id or not name or not race or not class then return end
 
 	local r = gdd.race[race]
+	if not r then return end
 
-	local ok
-	ok, id = skynet.call (database, "lua", "character", "reserve", name)
-	assert (ok, errno.NAME_ALREADY_USED)
+	local c = gdd.class[class]
+	if not c then return end
 
 	local character = { 
 		id = id,
@@ -63,6 +58,23 @@ function REQUEST:character_create (args)
 			pos = { x = r.pos_x, y = r.pos_y, z = r.pos_z, o = r.pos_o },
 		},
 	}
+	return character
+end
+
+function REQUEST:character_create (args)
+	assert (args, errno.INVALID_ARGUMENT)
+	local c = args.character
+	assert (c, errno.INVALID_ARGUMENT)
+	local name = c.name
+	assert (name and #name < 24, errno.INVALID_ARGUMENT)
+
+	local ok
+	ok, id = skynet.call (database, "lua", "character", "reserve", name)
+	assert (ok, errno.NAME_ALREADY_USED)
+
+	local character = create (id, name, c.race, c.class)
+	assert (character, errno.INVALID_ARGUMENT)
+
 	local json = dbpacker.pack (character)
 	skynet.call (database, "lua", "character", "save", id, json)
 
@@ -84,15 +96,21 @@ function REQUEST:character_pick (args)
 	local ok, c = skynet.call (database, "lua", "character", "load", id)
 	assert (ok, errno.CHARACTER_NOT_EXISTS)
 
-	self.character = dbpacker.unpack (c)
+	local character = dbpacker.unpack (c)
+	self.character = character
 
 	local world = skynet.uniqueservice ("world")
 	skynet.call (world, "lua", "character_enter", id)
 
-	return { character = self.character }
+	return { character = character }
 end
 
-local handler = {}
+function handler.save (character)
+	if not character then return end
+
+	local data = dbpacker.pack (character)
+	skynet.call (database, "lua", "character", "save", character.id, data)
+end
 
 function handler:register ()
 	database = skynet.uniqueservice ("database")

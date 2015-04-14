@@ -119,9 +119,15 @@ end
 
 function CMD.close ()
 	logger.debug ("agent closed")
-	user = nil
-	user_fd = nil
-	REQUEST = nil
+
+	if user then
+		character_handler.save (user.character)
+
+		user = nil
+		user_fd = nil
+		REQUEST = nil
+	end
+
 	skynet.call (gamed, "lua", "close", self)
 end
 
