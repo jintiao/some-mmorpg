@@ -29,7 +29,8 @@ end
 function gamed.command_handler (cmd, ...)
 	local CMD = {}
 
-	function CMD.close (agent)	
+	function CMD.close (agent, account)
+		online_account[account] = nil
 		table.insert (pool, agent)
 	end
 

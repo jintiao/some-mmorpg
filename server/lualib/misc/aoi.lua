@@ -15,8 +15,8 @@ end
 function aoi.insert (id, pos)
 	if object[id] then return false end
 	
-	local ok = qtree:insert (id, pos.x, pos.z)
-	if ok == false then return false end
+	local tree = qtree:insert (id, pos.x, pos.z)
+	if not tree then return false end
 
 	local result = {}
 	qtree:query (id, pos.x - radius, pos.z - radius, pos.x + radius, pos.z + radius, result)
@@ -34,9 +34,23 @@ function aoi.insert (id, pos)
 		end
 	end
 
-	object[id] = { id = id, pos = pos, radius = radius, interest_list = interest_list }
+	object[id] = { id = id, pos = pos, qtree = tree, interest_list = interest_list, notify_list = notify_list }
 	
 	return ok, interest_list, notify_list
+end
+
+function aoi.remove (id)
+	local c = object[id]
+	if not c then return false end
+
+	if c.qtree then
+		c.qtree:remove (id)
+	else
+		qtree:remove (id)
+	end
+
+	object[id] = nil
+	return true, c.notify_list
 end
 
 return aoi

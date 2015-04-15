@@ -12,22 +12,26 @@ function quadtree.new (l, t, r, b)
 end
 
 function quadtree:insert (id, x, y)
-	if x < self.left or x > self.right or y < self.top or y > self.bottom then return false end
+	if x < self.left or x > self.right or y < self.top or y > self.bottom then return end
 
 	if self.children then
+		local t
 		for _, v in pairs (self.children) do
-			if v:insert (id, x, y) then return true end
+			t = v:insert (id, x, y)
+			if t then return t end
 		end
 	else
 		self.object[id] = { x = x, y = y }
 
 		if #self.object >= 20 then
-			self:subdivide ()
+			return self:subdivide (id)
 		end
+
+		return self
 	end
 end
 
-function quadtree:subdevide ()
+function quadtree:subdevide (last)
 	local left, top, right, bottom = self.left, self.top, self.right, self.bottom
 	local centerx = (left + right) // 2
 	local centery = (top + bottom) // 2
@@ -39,12 +43,35 @@ function quadtree:subdevide ()
 		quadtree.new (centerx, centery, right, bottom),
 	}
 
+	local ret
+	local t
 	for k, v in pairs (self.object) do
 		for _, c in self.children do
-			if c:insert (k, v.x, v.y) then break end
+			t = c:insert (k, v.x, v.y) 
+			if t then
+				if k == last then
+					ret = t
+				end
+				break
+			end
 		end
 	end
 	self.object = nil
+
+	return ret
+end
+
+function quadtree:remove (id)
+	if self.object then
+		if self.object[id] ~= nil then
+			self.object[id] = nil
+			return true
+		end
+	elseif self.children then
+		for _, v in pairs (self.children) do
+			if v:remove (id) then return true end
+		end
+	end
 end
 
 function quadtree:query (id, left, top, right, bottom, result)

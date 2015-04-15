@@ -22,7 +22,7 @@ function CMD.character_enter (agent, character)
 	end
 
 	online_character[character] = agent
-	logger.log (string.format ("character (%d) enter world", character))
+	logger.log (string.format ("character(%d) enter world", character))
 	local map, pos = skynet.call (agent, "lua", "world_enter")
 		
 	local m = map_instance[map]
@@ -32,6 +32,11 @@ function CMD.character_enter (agent, character)
 	end
 
 	skynet.call (m, "lua", "character_enter", agent, character, pos)
+end
+
+function CMD.character_leave (agent, character)
+	logger.log (string.format ("character(%d) leave world", character))
+	online_character[character] = nil
 end
 
 skynet.start (function ()

@@ -113,12 +113,9 @@ aoi_add 0 {
 	}
 }
 
-aoi_move 1 {
+aoi_remove 1 {
 	request {
 		character 0 : integer
-		pos 1 : position
-		dir 2 : integer
-		speed 3 : integer
 	}
 }
 

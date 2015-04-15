@@ -120,8 +120,21 @@ end
 
 function CMD.close ()
 	logger.debug ("agent closed")
-
+	
+	local account
 	if user then
+		account = user.account
+
+		if user.map then
+			skynet.call (user.map, "lua", "character_leave")
+			user.map = nil
+		end
+
+		if user.world then
+			skynet.call (user.world, "lua", "character_leave", user.character.id)
+			user.world = nil
+		end
+
 		character_handler.save (user.character)
 
 		user = nil
@@ -129,7 +142,7 @@ function CMD.close ()
 		REQUEST = nil
 	end
 
-	skynet.call (gamed, "lua", "close", self)
+	skynet.call (gamed, "lua", "close", self, account)
 end
 
 function CMD.kick ()
