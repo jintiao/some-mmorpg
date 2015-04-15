@@ -95,9 +95,10 @@ end
 
 local function handle_request (name, args)
 	print ("request", name)
-
 	if args then
 		print_r (args)
+	else
+		print "empty argument"
 	end
 end
 

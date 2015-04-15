@@ -59,7 +59,7 @@ local types = [[
 }
 
 .attribute_aoi {
-	hp 0 : integer
+	health 0 : integer
 	level 1 : integer
 }
 
@@ -101,20 +101,15 @@ character_pick 2 {
 	}
 }
 
-map_move 3 {
-	request {
-		pos 0 : position
-		dir 1 : integer
-	}
+map_ready 3 {
 }
 
 ]]
 
 local s2c = [[
-map_enter 0 {
+aoi_add 0 {
 	request {
-		map 0 : string
-		pos 1 : position
+		character 0 : character_aoi
 	}
 }
 

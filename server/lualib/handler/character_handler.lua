@@ -147,7 +147,7 @@ function handler.init (character)
 
 	local attribute = setmetatable (character.attribute, { __index = character.runtime.attribute })
 
-	local health = attribute.health + 1000
+	local health = attribute.health
 	if not health or health > attribute.health_max then
 		attribute.health = attribute.health_max
 	end

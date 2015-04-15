@@ -2,47 +2,44 @@ local skynet = require "skynet"
 local logger = require "logger"
 local aoi = require "misc.aoi"
 
-local world = ...
+local world
 local conf
 
+local pending_character = {}
 local online_character = {}
 local CMD = {}
 
-function CMD.init (c)
+function CMD.init (w, c)
+	world = w
 	conf = c
 	aoi.init (conf.bbox, conf.radius)
 end
 
-function CMD.character_enter (agent, character, pos)
+function CMD.character_enter (_, agent, character)
 	logger.log (string.format ("character (%d) entering map (%s)", character, conf.name))
-	online_character[character] = agent
-	skynet.call (agent, "lua", "map_enter", conf.name, character, pos)
+	pending_character[agent] = character
+	skynet.call (agent, "lua", "map_enter")
+end
 
-	local ok, interest_list, notify_list = aoi.insert (character, pos)
-	if ok == false then
-		skynet.call (world, "lua", "kick", character)
-		return
-	end
+function CMD.character_ready (agent, pos)
+	if pending_character[agent] == nil then return false end
+	online_character[agent] = pending_character[agent]
+	pending_character[agent] = nil
 
-	local t = {}
-	for i = 1, #interest_list do
-		local c = interest_list[i]
-		t[c] = online_character[c]
-	end
-	skynet.call (agent, "lua", "aoi_add", t)
+	local ok, interest_list, notify_list = aoi.insert (agent, pos)
+	if ok == false then return false end
 
-	local ct = { [character] = agent }
-	for i = 1, #notify_list do
-		local a = online_character[notify_list[i]]
-		if a then
-			skynet.call (a, "lua", "aoi_add", ct)
-		end
+	skynet.call (agent, "lua", "aoi_add", interest_list)
+
+	local t = { agent }
+	for _, a in pairs (notify_list) do
+		skynet.call (a, "lua", "aoi_add", t)
 	end
 end
 
 skynet.start (function ()
 	skynet.dispatch ("lua", function (_, source, command, ...)
 		local f = assert (CMD[command])
-		skynet.retpack (f (...))
+		skynet.retpack (f (source, ...))
 	end)
 end)

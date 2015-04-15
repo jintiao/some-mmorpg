@@ -107,7 +107,8 @@ function CMD.open (from, fd, account)
 	user = { 
 		fd = fd, 
 		account = account,
-		REQUEST = {}
+		REQUEST = {},
+		send_request = send_request
 	}
 	user_fd = user.fd
 	REQUEST = user.REQUEST
@@ -146,20 +147,17 @@ function CMD.world_enter (world)
 	user.world = world
 	character_handler.unregister (user)
 	world_handler.register (user)
+
+	return user.character.general.map, user.character.movement.pos
 end
 
-function CMD.map_enter (map, map_name, character, pos)
-	logger.debug (string.format ("map %s(%d) entered", map_name, map))
+function CMD.map_enter (map)
+	logger.debug (string.format ("map(%d) entered", map))
 	
 	user.map = map
 
-	local c = { id = character, pos = pos }
-	user.character_writer = sharemap.writer ("character", user.character)
-
 	map_handler.register (user)
 	aoi_handler.register (user)
-
-	send_request ("map_enter", { map = map_name, pos = pos })
 end
 
 skynet.start (function ()

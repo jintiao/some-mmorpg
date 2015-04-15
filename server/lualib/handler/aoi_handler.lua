@@ -6,25 +6,20 @@ local sharemap = require "sharemap"
 local REQUEST = {}
 
 function REQUEST:aoi_add (list)
-	logger.log ("aoi_add")
-	print_r (list)
-
 	local s = skynet.self ()
 	for _, a in pairs (list) do
 		skynet.fork (function ()
 			local r = skynet.call (a, "lua", "aoi_subscribe", s)
 			local reader = sharemap.reader ("character", r)
-			reader:update ()
-			print "aoi reader"
-			print_r (reader)
+			self.send_request ("aoi_add", { character = reader })
 		end)
 	end
 end
 
-local subscriber = {}
 function REQUEST:aoi_subscribe (from)
-	logger.log ("aoi_subscribe from", from)
-	table.insert (subscriber, from)
+	if not self.character_writer then
+		self.character_writer = sharemap.writer ("character", self.character)
+	end
 	return self.character_writer:copy ()
 end
 
