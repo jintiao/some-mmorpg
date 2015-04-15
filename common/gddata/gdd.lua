@@ -1,11 +1,9 @@
-local race = require "gddata.race"
-local class = require "gddata.class"
-local map = require "gddata.map"
 
 local gdd = {
-	race = race,
-	class = class,
-	map = map,
+	race = require "gddata.race",
+	class = require "gddata.class",
+	map = require "gddata.map",
+	attribute = require "gddata.attribute",
 }
 
 return gdd

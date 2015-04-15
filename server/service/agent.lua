@@ -141,6 +141,8 @@ function CMD.world_enter (world)
 	logger.register (name)
 	logger.debug (string.format ("world(%d) entered", world))
 
+	character_handler.init (user.character)
+
 	user.world = world
 	character_handler.unregister (user)
 	world_handler.register (user)

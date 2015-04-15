@@ -105,10 +105,61 @@ function REQUEST:character_pick (args)
 	return { character = character }
 end
 
+attribute_string = {
+	"health",
+	"strength",
+	"stamina",
+}
+
+function handler.init (character)
+	local temp_attribute = {
+		[1] = {},
+		[2] = {},
+	}
+	local attribute_count = #temp_attribute
+
+	character.runtime = {
+		temp_attribute = temp_attribute,
+		attribute = temp_attribute[attribute_count],
+	}
+
+	local class = character.general.class
+	local race = character.general.race
+	local level = character.attribute.level
+
+	local gda = gdd.attribute
+
+	local base = temp_attribute[1]
+	base.health_max = gda.health_max[class][level]
+	base.strength = gda.strength[race][level]
+	base.stamina = gda.stamina[race][level]
+	
+	local last = temp_attribute[attribute_count - 1]
+	local final = temp_attribute[attribute_count]
+
+	if last.stamina >= 20 then
+		final.health_max = last.health_max + 20 + (last.stamina - 20) * 10
+	else
+		final.health_max = last.health_max + last.stamina
+	end
+	final.strength = last.strength
+	final.stamina = last.stamina
+
+	local attribute = setmetatable (character.attribute, { __index = character.runtime.attribute })
+
+	local health = attribute.health + 1000
+	if not health or health > attribute.health_max then
+		attribute.health = attribute.health_max
+	end
+end
+
 function handler.save (character)
 	if not character then return end
 
+	local runtime = character.runtime
+	character.runtime = nil
 	local data = dbpacker.pack (character)
+	character.runtime = runtime
 	skynet.call (database, "lua", "character", "save", character.id, data)
 end
 

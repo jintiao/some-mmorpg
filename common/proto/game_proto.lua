@@ -29,7 +29,7 @@ local types = [[
 }
 
 .attribute {
-	hp 0 : integer
+	health 0 : integer
 	level 1 : integer
 	exp 2 : integer
 }
