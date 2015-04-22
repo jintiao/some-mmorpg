@@ -5,33 +5,37 @@ local sharemap = require "sharemap"
 
 local REQUEST = {}
 
-local subscribing = {}
 function REQUEST:aoi_add (list)
 	local s = skynet.self ()
 	for _, a in pairs (list) do
 		skynet.fork (function ()
-			local r = skynet.call (a, "lua", "aoi_subscribe", s)
-			local reader = sharemap.reader ("character", r)
-			subscribing[a] = reader
-			self.send_request ("aoi_add", { character = reader })
+			local reader = skynet.call (a, "lua", "aoi_subscribe", s)
+			local c = sharemap.reader ("character", reader)
+			setmetatable (c.attribute, { __index = c.runtime.attribute })
+			self.send_request ("aoi_add", { character = c })
+
+			self.subscribing[c.id] = { character = c, agent = a }
+			self.agent2cid[a] = c.id
 		end)
 	end
 end
 
-function REQUEST:aoi_remove (agent)
-	local reader = subscribing[agent]
-
-	if reader then
-		self.send_request ("aoi_remove", { character = reader.id })
-		subscribing[agent] = nil
-	end
-end
-
-function REQUEST:aoi_subscribe (from)
+function REQUEST:aoi_subscribe (agent)
 	if not self.character_writer then
 		self.character_writer = sharemap.writer ("character", self.character)
 	end
+	self.subscriber[agent] = agent
 	return self.character_writer:copy ()
+end
+
+function REQUEST:aoi_remove (agent)
+	local id = self.agent2cid[agent]
+	assert (id)
+
+	self.send_request ("aoi_remove", { character = id })
+	
+	self.subscribing[id] = nil
+	self.agent2cid[agent] = nil
 end
 
 local handler = {}

@@ -133,6 +133,7 @@ function handler.init (character)
 	base.health_max = gda.health_max[class][level]
 	base.strength = gda.strength[race][level]
 	base.stamina = gda.stamina[race][level]
+	base.attack_power = 0
 	
 	local last = temp_attribute[attribute_count - 1]
 	local final = temp_attribute[attribute_count]
@@ -144,6 +145,7 @@ function handler.init (character)
 	end
 	final.strength = last.strength
 	final.stamina = last.stamina
+	final.attack_power = last.attack_power + final.strength
 
 	local attribute = setmetatable (character.attribute, { __index = character.runtime.attribute })
 

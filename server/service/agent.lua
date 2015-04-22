@@ -8,9 +8,13 @@ local character_handler = require "handler.character_handler"
 local world_handler = require "handler.world_handler"
 local map_handler = require "handler.map_handler"
 local aoi_handler = require "handler.aoi_handler"
+local combat_handler = require "handler.combat_handler"
+local print_r = require "print_r"
 
 local gamed = ...
 local database
+
+local traceback = debug.traceback
 
 local host = sprotoloader.load (3):host "package"
 local pack_request = host:attach (sprotoloader.load (4))
@@ -65,7 +69,7 @@ local REQUEST
 local function handle_request (name, args, response)
 	local f = REQUEST[name]
 	if f then
-		local ok, ret = pcall (f, user, args)
+		local ok, ret = xpcall (f, traceback, user, args)
 		if not ok then
 			logger.warning (string.format ("handle message failed : %s", name), ret) 
 			kick_self ()
@@ -108,7 +112,11 @@ function CMD.open (from, fd, account)
 		fd = fd, 
 		account = account,
 		REQUEST = {},
-		send_request = send_request
+		send_request = send_request,
+
+		subscribing = {},
+		agent2cid = {},
+		subscriber = {}
 	}
 	user_fd = user.fd
 	REQUEST = user.REQUEST
@@ -171,6 +179,7 @@ function CMD.map_enter (map)
 
 	map_handler.register (user)
 	aoi_handler.register (user)
+	combat_handler.register (user)
 end
 
 skynet.start (function ()
@@ -180,7 +189,7 @@ skynet.start (function ()
 			skynet.retpack (f (from, ...))
 		else
 			f = assert (REQUEST[command])
-			local ok, ret = pcall (f, user, ...)
+			local ok, ret = xpcall (f, traceback, user, ...)
 			if not ok then
 				logger.warning (string.format ("handle message failed : %s", command), ret) 
 				kick_self ()

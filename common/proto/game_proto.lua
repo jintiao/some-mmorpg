@@ -32,6 +32,10 @@ local types = [[
 	health 0 : integer
 	level 1 : integer
 	exp 2 : integer
+	health_max 3 : integer
+	strength 4 : integer
+	stamina 5 : integer
+	attack_power 6 : integer
 }
 
 .character_agent {
@@ -92,7 +96,7 @@ character_create 1 {
 
 character_pick 2 {
 	request {
-		id 0 : integer
+		id 0 : integer 
 	}
 
 	response {
@@ -101,7 +105,17 @@ character_pick 2 {
 	}
 }
 
-map_ready 3 {
+map_ready 100 {
+}
+
+combat_melee_attack 400 {
+	request {
+		target 0 : integer
+	}
+	response {
+		target 0 : integer
+		damage 1 : integer
+	}
 }
 
 ]]
