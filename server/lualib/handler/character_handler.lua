@@ -20,6 +20,13 @@ local function load_list (account)
 	return list
 end
 
+local function check_list_id (account, id)
+	local list = load_list (account)
+	for _, v in pairs (list) do
+		if v == id then return true end
+	end
+end
+
 function REQUEST:character_list ()
 	local list = load_list (self.account)
 	local character = {}
@@ -79,7 +86,7 @@ function REQUEST:character_create (args)
 	skynet.call (database, "lua", "character", "save", id, json)
 
 	local list = load_list (self.account)
-	list[id] = id
+	table.insert (list, id)
 	json = dbpacker.pack (list)
 	skynet.call (database, "lua", "character", "savelist", self.account, json)
 
@@ -90,8 +97,7 @@ function REQUEST:character_pick (args)
 	assert (args, errno.INVALID_ARGUMENT)
 	local id = assert (args.id, errno.INVALID_ARGUMENT)
 
-	local list = load_list (self.account)
-	assert (list[tostring (id)] ~= nil, errno.CHARACTER_NOT_EXISTS)
+	assert (check_list_id (self.account, id), errno.CHARACTER_NOT_EXISTS)
 
 	local ok, c = skynet.call (database, "lua", "character", "load", id)
 	assert (ok, errno.CHARACTER_NOT_EXISTS)
