@@ -16,7 +16,8 @@ function CMD.init (w, c)
 end
 
 function CMD.character_enter (_, agent, character)
-	logger.log (string.format ("character(%d) enter map(%s)", character, conf.name))
+	logger.log (string.format ("character(%d) loading map(%s)", character, conf.name))
+
 	pending_character[agent] = character
 	skynet.call (agent, "lua", "map_enter")
 end
@@ -40,6 +41,8 @@ function CMD.character_ready (agent, pos)
 	if pending_character[agent] == nil then return false end
 	online_character[agent] = pending_character[agent]
 	pending_character[agent] = nil
+
+	logger.log (string.format ("character(%d) enter map(%s)", online_character[agent], conf.name))
 
 	local ok, interest_list, notify_list = aoi.insert (agent, pos)
 	if ok == false then return false end

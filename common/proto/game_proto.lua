@@ -63,8 +63,9 @@ local types = [[
 }
 
 .attribute_aoi {
-	health 0 : integer
-	level 1 : integer
+	level 0 : integer
+	health 1 : integer
+	health_max 2 : integer
 }
 
 .character_aoi {

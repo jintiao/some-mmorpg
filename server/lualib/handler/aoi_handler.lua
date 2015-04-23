@@ -11,7 +11,6 @@ function REQUEST:aoi_add (list)
 		skynet.fork (function ()
 			local reader = skynet.call (a, "lua", "aoi_subscribe", s)
 			local c = sharemap.reader ("character", reader)
-			setmetatable (c.attribute, { __index = c.runtime.attribute })
 			self.send_request ("aoi_add", { character = c })
 
 			self.subscribing[c.id] = { character = c, agent = a }
