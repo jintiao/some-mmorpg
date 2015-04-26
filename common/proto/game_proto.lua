@@ -24,8 +24,7 @@ local types = [[
 }
 
 .movement {
-	mode 0 : integer
-	pos 1 : position
+	pos 0 : position
 }
 
 .attribute {
@@ -38,11 +37,14 @@ local types = [[
 	attack_power 6 : integer
 }
 
-.character_agent {
-	id 0 : integer
-	general 1 : general
-	attribute 2 : attribute
-	movement 3 : movement
+.attribute_overview {
+	level 0 : integer
+}
+
+.attribute_aoi {
+	level 0 : integer
+	health 1 : integer
+	health_max 2 : integer
 }
 
 .character {
@@ -52,20 +54,17 @@ local types = [[
 	movement 3 : movement
 }
 
-.attribute_overview {
-	level 0 : integer
+.character_agent {
+	id 0 : integer
+	general 1 : general
+	attribute 2 : attribute
+	movement 3 : movement
 }
 
 .character_overview {
 	id 0 : integer
 	general 1 : general
 	attribute 2 : attribute_overview
-}
-
-.attribute_aoi {
-	level 0 : integer
-	health 1 : integer
-	health_max 2 : integer
 }
 
 .character_aoi {
@@ -109,6 +108,15 @@ character_pick 2 {
 map_ready 100 {
 }
 
+move_blink 200 {
+	request {
+		destination 0 : position
+	}
+	response {
+		pos 0 : position
+	}
+}
+
 combat_melee_attack 400 {
 	request {
 		target 0 : integer
@@ -131,6 +139,13 @@ aoi_add 0 {
 aoi_remove 1 {
 	request {
 		character 0 : integer
+	}
+}
+
+aoi_update_move 2 {
+	request {
+		character 0 : integer
+		movement 1 : movement
 	}
 }
 

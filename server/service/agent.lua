@@ -8,6 +8,7 @@ local character_handler = require "handler.character_handler"
 local world_handler = require "handler.world_handler"
 local map_handler = require "handler.map_handler"
 local aoi_handler = require "handler.aoi_handler"
+local move_handler = require "handler.move_handler"
 local combat_handler = require "handler.combat_handler"
 local print_r = require "print_r"
 
@@ -23,8 +24,8 @@ local pack_request = host:attach (sprotoloader.load (4))
 .user {
 	fd : integer
 	account : integer
-	character : character
 
+	character : character
 	world : integer
 	map : integer
 }
@@ -179,6 +180,7 @@ function CMD.map_enter (map)
 
 	map_handler.register (user)
 	aoi_handler.register (user)
+	move_handler.register (user)
 	combat_handler.register (user)
 end
 
