@@ -21,6 +21,12 @@ function logger.log (...)
 	end
 end
 
+function logger.logf (fmt, ...)
+	if level <= 2 then
+		write (lstr, string.format (fmt, ...))
+	end
+end
+
 function logger.warning (...)
 	if level <= 3 then 
 		write (wstr, ...)

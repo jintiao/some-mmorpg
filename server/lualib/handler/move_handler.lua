@@ -8,23 +8,25 @@ local REQUEST = {}
 function REQUEST:move_blink (args)
 	assert (args and args.destination)
 
-	local pos = skynet.call (self.map, "lua", "move_blink", self.character.id, args.destination) 
-
-
-	return { target = tid, damage = damage }
-end
-
-function REQUEST:combat_melee_damage (attacker, damage)
-	damage = math.floor (damage * 0.75)
-
-	hp = self.character.attribute.health - damage
-	if hp <= 0 then
-		damage = damage + hp
-		hp = self.character.attribute.health_max
+	local npos = args.destination
+	local opos = self.character.movement.pos
+	self.character.movement.pos = npos
+	
+	local writer = self.character_writer
+	if writer then
+		writer:commit ()
 	end
-	self.character.attribute.health = hp
+	
+	local ok = skynet.call (self.map, "lua", "move_blink", npos) 
+	if not ok then
+		self.character.movement.pos = opos
+		if writer then
+			writer:commit ()
+		end
+		error ()
+	end
 
-	return damage
+	return { pos = npos }
 end
 
 function handler:register ()

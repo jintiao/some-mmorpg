@@ -29,12 +29,22 @@ end
 
 function REQUEST:aoi_remove (agent)
 	local id = self.agent2cid[agent]
-	assert (id)
+	if not id then return end
 
 	self.send_request ("aoi_remove", { character = id })
 	
 	self.subscribing[id] = nil
 	self.agent2cid[agent] = nil
+end
+
+function REQUEST:aoi_move (agent)
+	local id = self.agent2cid[agent]
+	if not id or not self.subscribing[id] then return end
+
+	local c = self.subscribing[id].character
+	if not c then return end
+	c:update ()
+	self.send_request ("aoi_update_move", { character = c })
 end
 
 local handler = {}

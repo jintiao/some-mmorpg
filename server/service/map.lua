@@ -44,15 +44,37 @@ function CMD.character_ready (agent, pos)
 
 	logger.log (string.format ("character(%d) enter map(%s)", online_character[agent], conf.name))
 
-	local ok, interest_list, notify_list = aoi.insert (agent, pos)
-	if ok == false then return false end
+	local ok, list = aoi.insert (agent, pos)
+	if not ok then return false end
 
-	skynet.call (agent, "lua", "aoi_add", interest_list)
+	skynet.call (agent, "lua", "aoi_add", list)
 
 	local t = { agent }
-	for _, a in pairs (notify_list) do
+	for _, a in pairs (list) do
 		skynet.call (a, "lua", "aoi_add", t)
 	end
+end
+
+function CMD.move_blink (agent, pos)
+	local ok, add, update, remove = aoi.update (agent, pos)
+	if not ok then return false end
+
+	skynet.call (agent, "lua", "aoi_add", add)
+	skynet.call (agent, "lua", "aoi_move", update)
+	skynet.call (agent, "lua", "aoi_remove", remove)
+
+	local t = { agent }
+	for _, a in pairs (add) do
+		skynet.call (a, "lua", "aoi_add", t)
+	end
+	for _, a in pairs (update) do
+		skynet.call (a, "lua", "aoi_move", agent)
+	end
+	for _, a in pairs (remove) do
+		skynet.call (a, "lua", "aoi_remove", agent)
+	end
+
+	return true
 end
 
 skynet.start (function ()

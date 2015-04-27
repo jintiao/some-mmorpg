@@ -74,6 +74,10 @@ local types = [[
 	movement 3 : movement
 }
 
+.character_aoi_move {
+	id 0 : integer
+	movement 3 : movement
+}
 ]]
 
 local c2s = [[
@@ -144,8 +148,7 @@ aoi_remove 1 {
 
 aoi_update_move 2 {
 	request {
-		character 0 : integer
-		movement 1 : movement
+		character 0 : character_aoi_move
 	}
 }
 

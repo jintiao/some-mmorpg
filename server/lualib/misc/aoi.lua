@@ -13,35 +13,32 @@ function aoi.init (bbox, r)
 end
 
 function aoi.insert (id, pos)
-	if object[id] then return false end
+	if object[id] then return end
 	
 	local tree = qtree:insert (id, pos.x, pos.z)
-	if not tree then return false end
+	if not tree then return end
 
 	local result = {}
 	qtree:query (id, pos.x - radius, pos.z - radius, pos.x + radius, pos.z + radius, result)
 
-	local interest_list = {}
-	local notify_list = {}
-
+	local list = {}
 	for i = 1, #result do
 		local cid = result[i]
 		local c = object[cid]
 		if c then
-			table.insert (interest_list, cid)
-			table.insert (notify_list, cid)
-			table.insert (c.interest_list, id)
+			table.insert (list, cid)
+			table.insert (c.list, id)
 		end
 	end
 
-	object[id] = { id = id, pos = pos, qtree = tree, interest_list = interest_list, notify_list = notify_list }
+	object[id] = { id = id, pos = pos, qtree = tree, list = list }
 	
-	return ok, interest_list, notify_list
+	return true, list
 end
 
 function aoi.remove (id)
 	local c = object[id]
-	if not c then return false end
+	if not c then return end
 
 	if c.qtree then
 		c.qtree:remove (id)
@@ -50,7 +47,42 @@ function aoi.remove (id)
 	end
 
 	object[id] = nil
-	return true, c.notify_list
+	return true, c.list
+end
+
+function aoi.update (id, pos)
+	local ok, olist = aoi.remove (id)
+	if not ok then return end
+
+	local nlist
+	ok, nlist = aoi.insert (id, pos)
+	if not ok then return end
+
+	local ulist = {}
+	for _, a in pairs (nlist) do
+		local match
+		for k, v in pairs (olist) do
+			if a == v then
+				match = k
+				table.insert (ulist, a)
+				break
+			end
+		end
+		if match then
+			olist[match] = nil
+		end
+	end
+
+	for _, a in pairs (ulist) do
+		for k, v in pairs (nlist) do
+			if a == v then
+				nlist[k] = nil
+				break
+			end
+		end
+	end
+
+	return true, nlist, ulist, olist
 end
 
 return aoi
