@@ -135,13 +135,20 @@ function CMD.close ()
 		account = user.account
 
 		if user.map then
+			logger.debug ("leave map")
 			skynet.call (user.map, "lua", "character_leave")
 			user.map = nil
+			map_handler.unregister (user)
+			aoi_handler.unregister (user)
+			move_handler.unregister (user)
+			combat_handler.unregister (user)
 		end
 
 		if user.world then
+			logger.debug ("leave world")
 			skynet.call (user.world, "lua", "character_leave", user.character.id)
 			user.world = nil
+			world_handler.unregister (user)
 		end
 
 		character_handler.save (user.character)

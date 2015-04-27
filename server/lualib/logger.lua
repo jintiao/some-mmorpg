@@ -15,15 +15,21 @@ function logger.debug (...)
 	end
 end
 
+function logger.debugf (...)
+	if level <= 1 then 
+		write (dstr, string.format (...))
+	end
+end
+
 function logger.log (...)
 	if level <= 2 then 
 		write (lstr, ...)
 	end
 end
 
-function logger.logf (fmt, ...)
+function logger.logf (...)
 	if level <= 2 then
-		write (lstr, string.format (fmt, ...))
+		write (lstr, string.format (...))
 	end
 end
 
@@ -33,9 +39,21 @@ function logger.warning (...)
 	end
 end
 
+function logger.warningf (...)
+	if level <= 3 then 
+		write (wstr, string.format (...))
+	end
+end
+
 function logger.error (...)
 	if level <= 4 then 
 		write (estr, ...)
+	end
+end
+
+function logger.errorf (...)
+	if level <= 4 then 
+		write (estr, string.format (...))
 	end
 end
 

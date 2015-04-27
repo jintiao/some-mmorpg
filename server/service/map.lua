@@ -29,6 +29,7 @@ function CMD.character_leave (agent)
 		local ok, notify_list = aoi.remove (agent)
 		if ok then
 			for _, a in pairs (notify_list) do
+				logger.debugf ("calling (%d)", a)
 				skynet.call (a, "lua", "aoi_remove", agent)
 			end
 		end

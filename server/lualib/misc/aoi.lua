@@ -26,8 +26,8 @@ function aoi.insert (id, pos)
 		local cid = result[i]
 		local c = object[cid]
 		if c then
-			table.insert (list, cid)
-			table.insert (c.list, id)
+			list[cid] = cid
+			c.list[id] = id
 		end
 	end
 
@@ -46,6 +46,12 @@ function aoi.remove (id)
 		qtree:remove (id)
 	end
 
+	for _, v in pairs (c.list) do
+		local t = object[v]
+		if t then
+			t.list[id] = nil
+		end
+	end
 	object[id] = nil
 	return true, c.list
 end
@@ -60,26 +66,15 @@ function aoi.update (id, pos)
 
 	local ulist = {}
 	for _, a in pairs (nlist) do
-		local match
-		for k, v in pairs (olist) do
-			if a == v then
-				match = k
-				table.insert (ulist, a)
-				break
-			end
-		end
-		if match then
-			olist[match] = nil
+		local k = olist[a]
+		if k then
+			ulist[a] = a
+			olist[a] = nil
 		end
 	end
 
 	for _, a in pairs (ulist) do
-		for k, v in pairs (nlist) do
-			if a == v then
-				nlist[k] = nil
-				break
-			end
-		end
+		nlist[a] = nil
 	end
 
 	return true, nlist, ulist, olist
