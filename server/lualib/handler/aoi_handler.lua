@@ -11,10 +11,10 @@ function REQUEST:aoi_add (list)
 		skynet.fork (function ()
 			local reader = skynet.call (a, "lua", "aoi_subscribe", s)
 			local c = sharemap.reader ("character", reader)
-			self.send_request ("aoi_add", { character = c })
-
-			self.subscribing[c.id] = { character = c, agent = a }
+			self.subscribing[c.id] = { character = c, agent = a, wantmore = false, dirty = false }
 			self.agent2cid[a] = c.id
+
+			self.send_request ("aoi_add", { character = c })
 		end)
 	end
 end
@@ -27,34 +27,58 @@ function REQUEST:aoi_subscribe (agent)
 	return self.character_writer:copy ()
 end
 
-function REQUEST:aoi_remove (agent)
-	local id = self.agent2cid[agent]
-	if not id then return end
-
-	self.send_request ("aoi_remove", { character = id })
+function REQUEST:aoi_remove (list)
+	for _, agent in pairs (list) do
+		local id = self.agent2cid[agent]
+		if not id then return end
 	
-	self.subscribing[id] = nil
-	self.agent2cid[agent] = nil
+		self.subscribing[id] = nil
+		self.agent2cid[agent] = nil
+
+		self.send_request ("aoi_remove", { character = id })
+	end
 end
 
-function REQUEST:aoi_move (agent)
-	local id = self.agent2cid[agent]
-	if not id or not self.subscribing[id] then return end
-
-	local c = self.subscribing[id].character
-	if not c then return end
-	c:update ()
-	self.send_request ("aoi_update_move", { character = c })
+function REQUEST:aoi_move (list)
+	for _, agent in pairs (list) do
+		local id = self.agent2cid[agent]
+		local t = self.subscribing[id]
+		if t.wantmore then 
+			t.wantmore = false
+			t.dirty = false
+			local c = t.character
+			c:update ()
+			self.send_request ("aoi_update_move", { character = c })
+		else
+			t.dirty = true
+		end
+	end
 end
 
 local RESPONSE = {}
 
-function RESPONSE:aoi_add (request, response)
-	if response and response["repeat"] == true then
+local function send_aoi_move (self, id)
+	local t = self.subscribing[id]
+	if t.dirty then
+		t.wantmore = false
+		t.dirty = false
+
+		local c = t.character
+		c:update ()
+		self.send_request ("aoi_update_move", { character = c })
+	else
+		t.wantmore = true
 	end
 end
 
+function RESPONSE:aoi_add (request, response)
+	if not response or not response.wantmore then return end
+	send_aoi_move (self, request.character.id)	
+end
+
 function RESPONSE:aoi_update_move (request, response)
+	if not response or not response.wantmore then return end
+	send_aoi_move (self, request.character.id)	
 end
 
 local handler = {}
