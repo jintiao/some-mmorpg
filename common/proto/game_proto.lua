@@ -138,6 +138,9 @@ aoi_add 0 {
 	request {
 		character 0 : character_aoi
 	}
+	response {
+		repeat 0 : boolean
+	}
 }
 
 aoi_remove 1 {
@@ -149,6 +152,9 @@ aoi_remove 1 {
 aoi_update_move 2 {
 	request {
 		character 0 : character_aoi_move
+	}
+	response {
+		repeat 0 : boolean
 	}
 }
 

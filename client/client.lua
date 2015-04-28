@@ -93,12 +93,20 @@ local function recv (last)
 	return unpack (last .. r)
 end
 
-local function handle_request (name, args)
+local rr = { ["repeat"] = true }
+local function handle_request (name, args, response)
 	print ("request", name)
 	if args then
 		print_r (args)
 	else
 		print "empty argument"
+	end
+
+	if string.sub (name, 1, 3) == "aoi" then
+		if response then
+			print ("send repeat response for", name)
+			send_message (fd, response (rr))
+		end
 	end
 end
 

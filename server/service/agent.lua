@@ -72,7 +72,7 @@ local function handle_request (name, args, response)
 	if f then
 		local ok, ret = xpcall (f, traceback, user, args)
 		if not ok then
-			logger.warning (string.format ("handle message failed : %s", name), ret) 
+			logger.warningf ("handle message(%s) failed : %s", name, ret) 
 			kick_self ()
 		else
 			last_heartbeat_time = skynet.now ()
@@ -81,7 +81,30 @@ local function handle_request (name, args, response)
 			end
 		end
 	else
-		logger.warning (string.format ("unhandled message : %s", name)) 
+		logger.warningf ("unhandled message : %s", name)
+		kick_self ()
+	end
+end
+
+local RESPONSE
+local function handle_response (id, args)
+	local s = session[id]
+	if not s then
+		logger.warningf ("session %d not found", id)
+		kick_self ()
+		return
+	end
+
+	local f = RESPONSE[s.name]
+	if not f then
+		logger.warningf ("unhandled response : %s", s.name)
+		kick_self ()
+		return
+	end
+
+	local ok, ret = xpcall (f, traceback, user, s.args, args)
+	if not ok then
+		logger.warningf ("handle response(%d-%s) failed : %s", id, s.name, ret) 
 		kick_self ()
 	end
 end
@@ -95,8 +118,11 @@ skynet.register_protocol {
 	dispatch = function (_, _, type, ...)
 		if type == "REQUEST" then
 			handle_request (...)
+		elseif type == "RESPONSE" then
+			handle_response (...)
 		else
-			print ("invalid message type", type)
+			logger.warningf ("invalid message type : %s", type) 
+			kick_self ()
 		end
 	end,
 }
@@ -113,6 +139,7 @@ function CMD.open (from, fd, account)
 		fd = fd, 
 		account = account,
 		REQUEST = {},
+		RESPONSE = {},
 		send_request = send_request,
 
 		subscribing = {},
@@ -121,6 +148,7 @@ function CMD.open (from, fd, account)
 	}
 	user_fd = user.fd
 	REQUEST = user.REQUEST
+	RESPONSE = user.RESPONSE
 	character_handler.register (user)
 
 	last_heartbeat_time = skynet.now ()
@@ -200,7 +228,7 @@ skynet.start (function ()
 			f = assert (REQUEST[command])
 			local ok, ret = xpcall (f, traceback, user, ...)
 			if not ok then
-				logger.warning (string.format ("handle message failed : %s", command), ret) 
+				logger.warningf ("handle message(%s) failed : %s", command, ret) 
 				kick_self ()
 			end
 			skynet.retpack (ret)

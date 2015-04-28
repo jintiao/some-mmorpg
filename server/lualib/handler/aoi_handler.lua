@@ -47,6 +47,16 @@ function REQUEST:aoi_move (agent)
 	self.send_request ("aoi_update_move", { character = c })
 end
 
+local RESPONSE = {}
+
+function RESPONSE:aoi_add (request, response)
+	if response and response["repeat"] == true then
+	end
+end
+
+function RESPONSE:aoi_update_move (request, response)
+end
+
 local handler = {}
 
 function handler:register ()
@@ -54,11 +64,19 @@ function handler:register ()
 	for k, v in pairs (REQUEST) do
 		t[k] = v
 	end
+	t = self.RESPONSE
+	for k, v in pairs (RESPONSE) do
+		t[k] = v
+	end
 end
 
 function handler:unregister ()
 	local t = self.REQUEST
 	for k, _ in pairs (REQUEST) do
+		t[k] = nil
+	end
+	t = self.RESPONSE
+	for k, _ in pairs (RESPONSE) do
 		t[k] = nil
 	end
 end
