@@ -55,6 +55,14 @@ function REQUEST:aoi_move (list)
 	end
 end
 
+function REQUEST:aoi_update_attribute (agent)
+	local id = self.agent2cid[agent]
+	local t = self.subscribing[id]
+	local c = t.character
+	c:update ()
+	self.send_request ("aoi_update_attribute", { character = c })
+end
+
 local RESPONSE = {}
 
 local function send_aoi_move (self, id)
@@ -82,6 +90,20 @@ function RESPONSE:aoi_update_move (request, response)
 end
 
 local handler = {}
+
+function handler:boardcast_attribute ()
+	local writer = self.character_writer
+	if not writer then return end
+
+	writer:commit ()
+
+	self.send_request ("aoi_update_attribute", { character = writer })
+	for _, a in pairs (self.subscriber) do
+		skynet.fork (function ()
+			skynet.call (a, "lua", "aoi_update_attribute", skynet.self ())
+		end)
+	end
+end
 
 function handler:register ()
 	local t = self.REQUEST

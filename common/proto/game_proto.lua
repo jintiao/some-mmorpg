@@ -76,7 +76,12 @@ local types = [[
 
 .character_aoi_move {
 	id 0 : integer
-	movement 3 : movement
+	movement 1 : movement
+}
+
+.character_aoi_attribute {
+	id 0 : integer
+	attribute 1 : attribute_aoi
 }
 ]]
 
@@ -158,6 +163,11 @@ aoi_update_move 2 {
 	}
 }
 
+aoi_update_attribute 3 {
+	request {
+		character 0 : character_aoi_attribute
+	}
+}
 ]]
 
 game_proto.types = sparser.parse (types)

@@ -1,5 +1,6 @@
 local skynet = require "skynet"
 local logger = require "logger"
+local aoi_handler = require "handler.aoi_handler"
 local print_r = require "print_r"
 
 local handler = {}
@@ -28,11 +29,7 @@ function REQUEST:combat_melee_damage (attacker, damage)
 	end
 	self.character.attribute.health = hp
 
-	local writer = self.character_writer
-	if writer then
-		writer:commit ()
-	end
-
+	aoi_handler.boardcast_attribute (self)
 	return damage
 end
 
