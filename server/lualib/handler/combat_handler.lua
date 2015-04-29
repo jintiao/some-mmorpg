@@ -28,6 +28,11 @@ function REQUEST:combat_melee_damage (attacker, damage)
 	end
 	self.character.attribute.health = hp
 
+	local writer = self.character_writer
+	if writer then
+		writer:commit ()
+	end
+
 	return damage
 end
 

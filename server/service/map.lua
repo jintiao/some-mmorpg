@@ -28,9 +28,9 @@ function CMD.character_leave (agent)
 		logger.log (string.format ("character(%d) leave map(%s)", character, conf.name))
 		local ok, notify_list = aoi.remove (agent)
 		if ok then
+			local t = { [agent] = agent }
 			for _, a in pairs (notify_list) do
-				logger.debugf ("calling (%d)", a)
-				skynet.call (a, "lua", "aoi_remove", agent)
+				skynet.call (a, "lua", "aoi_remove", t)
 			end
 		end
 	end
@@ -64,15 +64,15 @@ function CMD.move_blink (agent, pos)
 	skynet.call (agent, "lua", "aoi_move", update)
 	skynet.call (agent, "lua", "aoi_remove", remove)
 
-	local t = { agent }
+	local t = { [agent] = agent }
 	for _, a in pairs (add) do
 		skynet.call (a, "lua", "aoi_add", t)
 	end
 	for _, a in pairs (update) do
-		skynet.call (a, "lua", "aoi_move", agent)
+		skynet.call (a, "lua", "aoi_move", t)
 	end
 	for _, a in pairs (remove) do
-		skynet.call (a, "lua", "aoi_remove", agent)
+		skynet.call (a, "lua", "aoi_remove", t)
 	end
 
 	return true

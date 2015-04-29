@@ -93,7 +93,7 @@ local function recv (last)
 	return unpack (last .. r)
 end
 
-local rr = { ["repeat"] = true }
+local rr = { wantmore = true }
 local function handle_request (name, args, response)
 	print ("request", name)
 	if args then
@@ -104,7 +104,6 @@ local function handle_request (name, args, response)
 
 	if string.sub (name, 1, 3) == "aoi" then
 		if response then
-			print ("send repeat response for", name)
 			send_message (fd, response (rr))
 		end
 	end

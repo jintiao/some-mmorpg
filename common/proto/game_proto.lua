@@ -139,7 +139,7 @@ aoi_add 0 {
 		character 0 : character_aoi
 	}
 	response {
-		repeat 0 : boolean
+		wantmore 0 : boolean
 	}
 }
 
@@ -154,7 +154,7 @@ aoi_update_move 2 {
 		character 0 : character_aoi_move
 	}
 	response {
-		repeat 0 : boolean
+		wantmore 0 : boolean
 	}
 }
 
