@@ -131,7 +131,7 @@ local CMD = {}
 
 
 function CMD.open (from, fd, account)
-	local name = string.format ("agnet%d-a-%d", skynet.self (), account)
+	local name = string.format ("agnet:%x-a-%d", skynet.self (), account)
 	logger.register (name)
 	logger.debug ("agent opened")
 
@@ -195,7 +195,7 @@ function CMD.kick ()
 end
 
 function CMD.world_enter (world)
-	local name = string.format ("agnet%d-c-%d", skynet.self (), user.character.id)
+	local name = string.format ("agnet:%x-c-%d", skynet.self (), user.character.id)
 	logger.register (name)
 	logger.debug (string.format ("world(%d) entered", world))
 

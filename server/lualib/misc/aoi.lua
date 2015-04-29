@@ -1,4 +1,5 @@
 local quadtree = require "misc.quadtree"
+local print_r = require "print_r"
 
 local aoi = {}
 
@@ -52,16 +53,35 @@ function aoi.remove (id)
 		end
 	end
 	object[id] = nil
+
 	return true, c.list
 end
 
 function aoi.update (id, pos)
-	local ok, olist = aoi.remove (id)
-	if not ok then return end
+	local c = object[id]
+	if not c then return end
 
-	local nlist
-	ok, nlist = aoi.insert (id, pos)
-	if not ok then return end
+	if c.qtree then
+		c.qtree:remove (id)
+	else
+		qtree:remove (id)
+	end
+
+	local olist = c.list
+
+	local tree = qtree:insert (id, pos.x, pos.z)
+	if not tree then return end
+
+	c.pos = pos
+
+	local result = {}
+	qtree:query (id, pos.x - radius, pos.z - radius, pos.x + radius, pos.z + radius, result)
+
+	local nlist = {}
+	for i = 1, #result do
+		local cid = result[i]
+		nlist[cid] = cid
+	end
 
 	local ulist = {}
 	for _, a in pairs (nlist) do
@@ -74,6 +94,14 @@ function aoi.update (id, pos)
 
 	for _, a in pairs (ulist) do
 		nlist[a] = nil
+	end
+
+	c.list = {}
+	for _, v in pairs (nlist) do
+		c.list[v] = v
+	end
+	for _, v in pairs (ulist) do
+		c.list[v] = v
 	end
 
 	return true, nlist, ulist, olist

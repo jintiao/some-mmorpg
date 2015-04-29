@@ -13,10 +13,12 @@ function CMD.init (w, c)
 	world = w
 	conf = c
 	aoi.init (conf.bbox, conf.radius)
+	local name = string.format ("map:%x-%s", skynet.self (), conf.name)
+	logger.register (name)
 end
 
 function CMD.character_enter (_, agent, character)
-	logger.log (string.format ("character(%d) loading map(%s)", character, conf.name))
+	logger.logf ("character(%d) loading map", character)
 
 	pending_character[agent] = character
 	skynet.call (agent, "lua", "map_enter")
@@ -25,7 +27,7 @@ end
 function CMD.character_leave (agent)
 	local character = online_character[agent] or pending_character[agent]
 	if character ~= nil then
-		logger.log (string.format ("character(%d) leave map(%s)", character, conf.name))
+		logger.logf ("character(%d) leave map", character)
 		local ok, notify_list = aoi.remove (agent)
 		if ok then
 			local t = { [agent] = agent }
@@ -43,7 +45,7 @@ function CMD.character_ready (agent, pos)
 	online_character[agent] = pending_character[agent]
 	pending_character[agent] = nil
 
-	logger.log (string.format ("character(%d) enter map(%s)", online_character[agent], conf.name))
+	logger.logf ("character(%d) enter map", online_character[agent])
 
 	local ok, list = aoi.insert (agent, pos)
 	if not ok then return false end

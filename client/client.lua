@@ -102,7 +102,7 @@ local function handle_request (name, args, response)
 		print "empty argument"
 	end
 
-	if string.sub (name, 1, 3) == "aoi" then
+	if string.sub (name, 1, 3) == "aoi" and name ~= "aoi_remove" then
 		if response then
 			send_message (fd, response (rr))
 		end
