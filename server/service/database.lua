@@ -1,8 +1,7 @@
 local skynet = require "skynet"
 local redis = require "redis"
 local errno = require "errno"
-local config = require "config.system"
-local database_config = require "config.database_config"
+local config = require "config.database"
 local account = require "db.account"
 local character = require "db.character"
 
@@ -49,9 +48,9 @@ skynet.start (function ()
 	module_init ("account", account)
 	module_init ("character", character)
 
-	center = redis.connect (database_config.center)
-	ngroup = #database_config.group
-	for _, c in ipairs (database_config.group) do
+	center = redis.connect (config.center)
+	ngroup = #config.group
+	for _, c in ipairs (config.group) do
 		table.insert (group, redis.connect (c))
 	end
 

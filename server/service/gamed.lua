@@ -22,8 +22,10 @@ function gamed.open (name)
 		table.insert (pool, skynet.newservice ("agent", self))
 	end
 
+	skynet.uniqueservice ("gdd")
+	skynet.uniqueservice ("world")
+
 	skynet.call (logind, "lua", "register", name, self)	
-	skynet.call (logind, "lua", "open", config.logind)	
 end
 
 function gamed.command_handler (cmd, ...)
