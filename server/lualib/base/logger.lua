@@ -1,3 +1,5 @@
+local skynet = require "skynet"
+
 local config = require "config.system"
 
 local logger = {}
@@ -5,8 +7,7 @@ local logger = {}
 local level = tonumber (config.log_level) or 1
 
 local function write (...)
-	local t = {...}
-	print (table.concat (t, " "))
+	skynet.error (...)
 end
 
 function logger.debug (...)

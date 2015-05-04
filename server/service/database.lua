@@ -1,5 +1,6 @@
 local skynet = require "skynet"
 local redis = require "redis"
+
 local errno = require "errno"
 local config = require "config.database"
 local account = require "db.account"
@@ -63,6 +64,15 @@ skynet.start (function ()
 		if not f then
 			skynet.retpack (false, errno.UNSUPPORTED_DATABASE_METHOD)
 		end
-		skynet.retpack (pcall (f, ...))
+		
+		local function ret (ok, ...)
+			if not ok then
+				skynet.ret ()
+			else
+				skynet.retpack (...)
+			end
+
+		end
+		ret (pcall (f, ...))
 	end)
 end)

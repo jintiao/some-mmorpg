@@ -42,6 +42,11 @@ end
 local server = "127.0.0.1"
 local login_port = 9777
 local game_port = 9555
+local gameserver = {
+	addr = "127.0.0.1",
+	port = 9555,
+	name = "gameserver",
+}
 
 local host = sproto.new (login_proto.s2c):host "package"
 local request = host:attach (sproto.new (login_proto.c2s))
@@ -133,9 +138,9 @@ end
 function RESPONSE:auth (args)
 	print ("RESPONSE.auth")
 	user.account = args.account
-	local token = args.token
+	local token = aes.encrypt (args.token .. gameserver.name, user.session_key)
 
-	fd = assert (socket.connect (server, game_port))
+	fd = assert (socket.connect (gameserver.addr, gameserver.port))
 	print (string.format ("game server connected, fd = %d", fd))
 	send_request ("login", { account = args.account, token = token })
 
