@@ -5,12 +5,12 @@ local socket = require "socket"
 
 local logger = require "logger"
 local protoloader = require "protoloader"
-local character_handler = require "handler.character_handler"
-local world_handler = require "handler.world_handler"
-local map_handler = require "handler.map_handler"
-local aoi_handler = require "handler.aoi_handler"
-local move_handler = require "handler.move_handler"
-local combat_handler = require "handler.combat_handler"
+local character_handler = require "agent.character_handler"
+local world_handler = require "agent.world_handler"
+local map_handler = require "agent.map_handler"
+local aoi_handler = require "agent.aoi_handler"
+local move_handler = require "agent.move_handler"
+local combat_handler = require "agent.combat_handler"
 
 
 local gamed = ...
@@ -129,9 +129,8 @@ skynet.register_protocol {
 
 local CMD = {}
 
-
 function CMD.open (from, fd, account)
-	local name = string.format ("agnet:%d", account)
+	local name = string.format ("agent:%d", account)
 	logger.name (name)
 	logger.debug ("agent opened")
 
@@ -149,7 +148,8 @@ function CMD.open (from, fd, account)
 	user_fd = user.fd
 	REQUEST = user.REQUEST
 	RESPONSE = user.RESPONSE
-	character_handler.register (user)
+	
+	character_handler:register (user)
 
 	last_heartbeat_time = skynet.now ()
 	heartbeat_check ()
@@ -195,7 +195,7 @@ function CMD.kick ()
 end
 
 function CMD.world_enter (world)
-	local name = string.format ("agnet:%d:%s", user.character.id, user.character.general.name)
+	local name = string.format ("agent:%d:%s", user.character.id, user.character.general.name)
 	logger.name (name)
 	logger.debugf ("world(%d) entered", world)
 

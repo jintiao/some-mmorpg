@@ -4,13 +4,19 @@ local sharedata = require "sharedata"
 local logger = require "logger"
 local errno = require "errno"
 local dbpacker = require "db.packer"
+local handler = require "agent.handler"
 
+
+local REQUEST = {}
+handler = handler.new (REQUEST)
 
 local database
 local gdd
 
-local handler = {}
-local REQUEST = {}
+handler:init (function ()
+	database = skynet.uniqueservice ("database")
+	gdd = sharedata.query "gdd"
+end)
 
 local function load_list (account)
 	local list
@@ -174,23 +180,6 @@ function handler.save (character)
 	local data = dbpacker.pack (character)
 	character.runtime = runtime
 	skynet.call (database, "lua", "character", "save", character.id, data)
-end
-
-function handler:register ()
-	database = skynet.uniqueservice ("database")
-	gdd = sharedata.query "gdd"
-
-	local t = self.REQUEST
-	for k, v in pairs (REQUEST) do
-		t[k] = v
-	end
-end
-
-function handler:unregister ()
-	local t = self.REQUEST
-	for k, _ in pairs (REQUEST) do
-		t[k] = nil
-	end
 end
 
 return handler

@@ -1,7 +1,8 @@
 local skynet = require "skynet"
+
 local logger = require "logger"
-local aoi_handler = require "handler.aoi_handler"
-local print_r = require "print_r"
+local aoi_handler = require "agent.aoi_handler"
+
 
 local handler = {}
 local REQUEST = {}
