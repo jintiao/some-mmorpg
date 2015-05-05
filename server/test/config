@@ -1,19 +1,15 @@
--- skynet config
-thread = 4
+skynet_root = "../3rd/skynet/"
+root = "./"
+common = "../common/"
+thread = 8
 logger = nil
 harbor = 0
-start = "main"
-bootstrap = "snlua bootstrap"
-skynet_root = "../../3rd/skynet/"
-server_root = "./"
-common_root = "../"
-lualoader = skynet_root.."lualib/loader.lua"
-lua_path = skynet_root.."lualib/?.lua;"..server_root.."?.lua;"..common_root.."?.lua;"..common_root.."skynet-ex/test/?.lua"
-lua_cpath = skynet_root.."luaclib/?.so;"..common_root.."skynet-ex/luaclib/?.so"
-luaservice = skynet_root.."service/?.lua;"..server_root.."test/?.lua"
+start = "main"	-- main script
+bootstrap = "snlua bootstrap"	-- The service for bootstrap
+
+lua_path = skynet_root.."lualib/?.lua;"..root.."lualib/?.lua;"..root.."lualib/base/?.lua;"..common.."?.lua"
+lua_cpath = skynet_root.."luaclib/?.so;"..root.."luaclib/?.so"
 cpath = skynet_root.."cservice/?.so"
-
--- game config
-watchdog_port = 8888
-account_services = 4
-
+luaservice = skynet_root.."service/?.lua;"..root.."test/?.lua"
+lualoader = skynet_root.."lualib/loader.lua"
+snax = skynet_root.."?.lua;"

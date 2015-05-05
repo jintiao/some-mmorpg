@@ -25,6 +25,8 @@ static BIGNUM *
 lua_tobn (lua_State *L, int index) {
 	size_t len = 0;
 	const char *s = lua_tolstring (L, index, &len);
+	if (s == NULL)
+		lua_error (L);
 	return BN_bin2bn ((unsigned char *)s, len, NULL);
 }
 /*
@@ -136,8 +138,8 @@ lcreate_server_session_key (lua_State *L) {
 static int
 lcreate_client_session_key (lua_State *L) {
 	SRP_gN *GN = SRP_get_default_gN("1024");
-	const char *I = lua_tostring (L, 1);
-	const char *p = lua_tostring (L, 2);
+	const char *I = luaL_checkstring (L, 1);
+	const char *p = luaL_checkstring (L, 2);
 	BIGNUM *s = lua_tobn (L, 3);
 	BIGNUM *a = lua_tobn (L, 4);
 	BIGNUM *A = lua_tobn (L, 5);
