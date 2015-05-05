@@ -2,9 +2,20 @@ local skynet = require "skynet"
 
 local config = require "config.system"
 
-local logger = {}
+local logger = {
+	LEVEL_DEBUG = 1,
+	LEVEL_LOG = 2,
+	LEVEL_WARNING = 3,
+	LEVEL_ERROR = 4,
+}
 
-local level = tonumber (config.log_level) or 1
+local level
+
+function logger.level (l)
+	level = l
+end
+
+logger.level (tonumber (config.log_level) or logger.LEVEL_LOG)
 
 local function write (...)
 	skynet.error (...)
@@ -58,13 +69,13 @@ function logger.errorf (...)
 	end
 end
 
-function logger.register (name)
-	dstr = "[" .. name .. "][Debug] "
-	lstr = "[" .. name .. "][Log] "
-	wstr = "[" .. name .. "][Warning] "
-	estr = "[" .. name .. "][Error] "
+function logger.name (name)
+	dstr = "[" .. name .. "]"
+	lstr = "[" .. name .. "]"
+	wstr = "[" .. name .. "]"
+	estr = "[" .. name .. "]"
 end
 
-logger.register (SERVICE_NAME)
+logger.name (SERVICE_NAME)
 
 return logger

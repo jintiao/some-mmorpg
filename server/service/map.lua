@@ -1,6 +1,6 @@
 local skynet = require "skynet"
 local logger = require "logger"
-local aoi = require "misc.aoi"
+local aoi = require "map.aoi"
 
 local world
 local conf
@@ -13,8 +13,7 @@ function CMD.init (w, c)
 	world = w
 	conf = c
 	aoi.init (conf.bbox, conf.radius)
-	local name = string.format ("map:%x-%s", skynet.self (), conf.name)
-	logger.register (name)
+	logger.name (conf.name)
 end
 
 function CMD.character_enter (_, agent, character)

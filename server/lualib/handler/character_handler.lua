@@ -1,7 +1,10 @@
 local skynet = require "skynet"
-local errno = require "errno"
 local sharedata = require "sharedata"
+
+local logger = require "logger"
+local errno = require "errno"
 local dbpacker = require "db.packer"
+
 
 local database
 local gdd
@@ -40,6 +43,8 @@ function REQUEST:character_list ()
 end
 
 local function create (id, name, race, class)
+	logger.debugf ("creating character id(%d) name(%s) race(%s) class(%s)", id, name, race, class)
+
 	if not id or not name or not race or not class then return end
 
 	local r = gdd.race[race]

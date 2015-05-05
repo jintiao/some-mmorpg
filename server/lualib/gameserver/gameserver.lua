@@ -1,7 +1,9 @@
-local gateserver = require "gateserver"
 local skynet = require "skynet"
+
+local gateserver = require "gameserver.gateserver"
 local logger = require "logger"
-local sprotoloader = require "sprotoloader"
+local protoloader = require "protoloader"
+
 
 local gameserver = {}
 local handshake = {}
@@ -17,21 +19,20 @@ end
 function gameserver.start (gamed)
 	local handler = {}
 
-	local host = sprotoloader.load (1):host "package"
-	local send_request = host:attach (sprotoloader.load (2))
+	local host, send_request = protoloader.load (protoloader.LOGIN)
 
 	function handler.open (source, conf)
-		return gamed.open (conf.name)
+		return gamed.open (conf)
 	end
 
 	function handler.connect (fd, addr)
-		logger.log (string.format ("connect from %s (fd = %d)", addr, fd))
+		logger.logf ("connect from %s (fd = %d)", addr, fd)
 		handshake[fd] = addr
 		gateserver.open_client (fd)
 	end
 
 	function handler.disconnect (fd)
-		logger.log (string.format ("fd (%d) disconnected", fd))
+		logger.logf ("fd (%d) disconnected", fd)
 	end
 
 	local function do_login (msg, sz)
@@ -45,17 +46,18 @@ function gameserver.start (gamed)
 		return account
 	end
 
+	local traceback = debug.traceback
 	function handler.message (fd, msg, sz)
 		local addr = handshake[fd]
 
 		if addr then
 			handshake[fd] = nil
-			local ok, account = pcall (do_login, msg, sz)
+			local ok, account = xpcall (do_login, traceback, msg, sz)
 			if not ok then
-				logger.log (string.format ("%s login failed", addr))
+				logger.warningf ("%s login failed : %s", addr, account)
 				gateserver.close_client (fd)
 			else
-				logger.log (string.format ("account %d login success", account))
+				logger.logf ("account %d login success", account)
 				gamed.login_handler (fd, account)
 			end
 		else
@@ -70,7 +72,7 @@ function gameserver.start (gamed)
 		login_token[id] = secret
 		skynet.timeout (10 * 100, function ()
 			if login_token[id] == secret then
-				logger.debug (string.format ("account %d token timeout", id))
+				logger.logf ("account %d token timeout", id)
 				login_token[id] = nil
 			end
 		end)

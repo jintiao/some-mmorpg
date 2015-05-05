@@ -1,24 +1,24 @@
 local skynet = require "skynet"
 local queue = require "skynet.queue"
-local logger = require "logger"
-local sprotoloader = require "sprotoloader"
 local sharemap = require "sharemap"
 local socket = require "socket"
+
+local logger = require "logger"
+local protoloader = require "protoloader"
 local character_handler = require "handler.character_handler"
 local world_handler = require "handler.world_handler"
 local map_handler = require "handler.map_handler"
 local aoi_handler = require "handler.aoi_handler"
 local move_handler = require "handler.move_handler"
 local combat_handler = require "handler.combat_handler"
-local print_r = require "print_r"
+
 
 local gamed = ...
 local database
 
 local traceback = debug.traceback
 
-local host = sprotoloader.load (3):host "package"
-local pack_request = host:attach (sprotoloader.load (4))
+local host, send_request = protoloader.load (protoloader.GAME)
 
 --[[
 .user {
@@ -43,7 +43,7 @@ local session = {}
 local session_id = 0
 local function send_request (name, args)
 	session_id = session_id + 1
-	local str = pack_request (name, args, session_id)
+	local str = send_request (name, args, session_id)
 	send_msg (user_fd, str)
 	session[session_id] = { name = name, args = args }
 end
@@ -131,8 +131,8 @@ local CMD = {}
 
 
 function CMD.open (from, fd, account)
-	local name = string.format ("agnet:%x-a-%d", skynet.self (), account)
-	logger.register (name)
+	local name = string.format ("agnet:%d", account)
+	logger.name (name)
 	logger.debug ("agent opened")
 
 	user = { 
@@ -186,7 +186,7 @@ function CMD.close ()
 		REQUEST = nil
 	end
 
-	skynet.call (gamed, "lua", "close", self, account)
+	skynet.call (gamed, "lua", "close", skynet.self (), account)
 end
 
 function CMD.kick ()
@@ -195,9 +195,9 @@ function CMD.kick ()
 end
 
 function CMD.world_enter (world)
-	local name = string.format ("agnet:%x-c-%d", skynet.self (), user.character.id)
-	logger.register (name)
-	logger.debug (string.format ("world(%d) entered", world))
+	local name = string.format ("agnet:%d:%s", user.character.id, user.character.general.name)
+	logger.name (name)
+	logger.debugf ("world(%d) entered", world)
 
 	character_handler.init (user.character)
 
@@ -209,7 +209,7 @@ function CMD.world_enter (world)
 end
 
 function CMD.map_enter (map)
-	logger.debug (string.format ("map(%d) entered", map))
+	logger.debugf ("map(%d) entered", map)
 	
 	user.map = map
 
@@ -225,7 +225,12 @@ skynet.start (function ()
 		if f then
 			skynet.retpack (f (from, ...))
 		else
-			f = assert (REQUEST[command])
+			f = REQUEST[command]
+			if not f then
+				logger.warningf ("unhandled message(%s)", command) 
+				return
+			end
+
 			local ok, ret = xpcall (f, traceback, user, ...)
 			if not ok then
 				logger.warningf ("handle message(%s) failed : %s", command, ret) 

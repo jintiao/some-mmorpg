@@ -146,6 +146,7 @@ function RESPONSE:auth (args)
 
 	host = sproto.new (game_proto.s2c):host "package"
 	request = host:attach (sproto.new (game_proto.c2s))
+	send_request ("character_list")
 end
 
 local function handle_response (id, args)
