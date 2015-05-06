@@ -1,4 +1,5 @@
 local skynet = require "skynet"
+local socketdriver = require "socketdriver"
 
 local gateserver = require "gameserver.gateserver"
 local logger = require "logger"
@@ -35,7 +36,7 @@ function gameserver.start (gamed)
 		logger.logf ("fd (%d) disconnected", fd)
 	end
 
-	local function do_login (msg, sz)
+	local function do_login (fd, msg, sz)
 		local type, name, args, response = host:dispatch (msg, sz)
 		assert (type == "REQUEST")
 		assert (name == "login")
@@ -43,6 +44,10 @@ function gameserver.start (gamed)
 		local token = assert (args.token)
 		local account = gamed.auth_handler (session, token)
 		assert (account)
+
+		local package = string.pack (">s2", response { account = account })
+		socketdriver.send (fd, package)
+
 		return account
 	end
 
@@ -52,7 +57,7 @@ function gameserver.start (gamed)
 
 		if addr then
 			handshake[fd] = nil
-			local ok, account = xpcall (do_login, traceback, msg, sz)
+			local ok, account = xpcall (do_login, traceback, fd, msg, sz)
 			if not ok then
 				logger.warningf ("%s login failed : %s", addr, account)
 				gateserver.close_client (fd)
