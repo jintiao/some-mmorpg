@@ -6,7 +6,7 @@ local protoloader = require "protoloader"
 
 
 local gameserver = {}
-local handshake = {}
+local pending_msg = {}
 
 function gameserver.forward (fd, agent)
 	gateserver.forward (fd, agent)
@@ -27,7 +27,6 @@ function gameserver.start (gamed)
 
 	function handler.connect (fd, addr)
 		logger.logf ("connect from %s (fd = %d)", addr, fd)
-		handshake[fd] = addr
 		gateserver.open_client (fd)
 	end
 
@@ -48,20 +47,27 @@ function gameserver.start (gamed)
 
 	local traceback = debug.traceback
 	function handler.message (fd, msg, sz)
-		local addr = handshake[fd]
+		local queue = pending_msg[fd]
+		if queue then
+			table.insert (queue, { msg = msg, sz = sz })
+		else
+			pending_msg[fd] = {}
 
-		if addr then
-			handshake[fd] = nil
 			local ok, account = xpcall (do_login, traceback, fd, msg, sz)
-			if not ok then
+			if ok then
+				logger.logf ("account %d login success", account)
+				local agent = gamed.login_handler (fd, account)
+				queue = pending_msg[fd]
+				for _, t in pairs (queue) do
+					logger.logf ("forward pending message to agent %d", agent)
+					skynet.rawcall(agent, "client", t.msg, t.sz)
+				end
+			else
 				logger.warningf ("%s login failed : %s", addr, account)
 				gateserver.close_client (fd)
-			else
-				logger.logf ("account %d login success", account)
-				gamed.login_handler (fd, account)
 			end
-		else
-			gamed.message_handler (fd, msg, sz)
+
+			pending_msg[fd] = nil
 		end
 	end
 

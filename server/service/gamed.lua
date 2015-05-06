@@ -64,20 +64,9 @@ function gamed.login_handler (fd, account)
 	end
 	online_account[account] = agent
 
-	pending_agent[fd] = agent
 	skynet.call (agent, "lua", "open", fd, account)
 	gameserver.forward (fd, agent)
-	pending_agent[fd] = nil
-end
-
-function gamed.message_handler (fd, msg, sz)
-	local agent = pending_agent[fd]
-	if agent then
-		logger.logf ("forward message to pending agent %d", agent)
-		skynet.rawcall(agent, "client", msg, sz)
-	else
-		logger.warningf ("unknown message from fd (%d), size (%d)", fd, sz)
-	end
+	return agent
 end
 
 gameserver.start (gamed)
