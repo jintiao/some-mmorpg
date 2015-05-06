@@ -1,7 +1,6 @@
 local skynet = require "skynet"
 local redis = require "redis"
 
-local errno = require "errno"
 local config = require "config.database"
 local account = require "db.account"
 local character = require "db.character"
@@ -45,6 +44,8 @@ local function module_init (name, mod)
 	mod.init (connection_handler, id_handler)
 end
 
+local traceback = debug.traceback
+
 skynet.start (function ()
 	module_init ("account", account)
 	module_init ("character", character)
@@ -58,11 +59,11 @@ skynet.start (function ()
 	skynet.dispatch ("lua", function (_, _, mod, cmd, ...)
 		local m = MODULE[mod]
 		if not m then
-			skynet.retpack (false, errno.UNSUPPORTED_DATABASE_METHOD)
+			return skynet.ret ()
 		end
 		local f = m[cmd]
 		if not f then
-			skynet.retpack (false, errno.UNSUPPORTED_DATABASE_METHOD)
+			return skynet.ret ()
 		end
 		
 		local function ret (ok, ...)
@@ -73,6 +74,6 @@ skynet.start (function ()
 			end
 
 		end
-		ret (pcall (f, ...))
+		ret (xpcall (f, traceback, ...))
 	end)
 end)

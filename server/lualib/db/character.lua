@@ -1,6 +1,5 @@
 local logger = require "logger"
 local packer = require "db.packer"
-local errno = require "errno"
 
 local character = {}
 local connection_handler
@@ -30,9 +29,7 @@ end
 function character.reserve (name)
 	local id = id_handler ()
 	local connection, key, field = make_name_key (name)
-	if connection:hsetnx (key, field, id) == 0 then
-		error (errno.NAME_ALREADY_USED)
-	end
+	assert (connection:hsetnx (key, field, id) ~= 0)
 	return id
 end
 
@@ -43,15 +40,13 @@ end
 
 function character.load (id)
 	connection, key, field = make_character_key (id)
-	local data = connection:hget (key, field)
-	if not data then error () end
+	local data = connection:hget (key, field) or error ()
 	return data
 end
 
 function character.list (account)
 	local connection, key, field = make_list_key (account)
-	local v = connection:hget (key, field)
-	if not v then error () end
+	local v = connection:hget (key, field) or error ()
 	return v
 end
 
@@ -59,7 +54,6 @@ function character.savelist (id, data)
 	connection, key, field = make_list_key (id)
 	connection:hset (key, field, data)
 end
-
 
 return character
 

@@ -1,13 +1,6 @@
 local constant = require "constant"
-local errno = require "errno"
 local srp = require "srp"
 
---[[
-user:helloworld
-	account = 1
-	salt = xxxx
-	verifier = yyyy
-]]--
 
 local account = {}
 local connection_handler
@@ -23,7 +16,7 @@ local function make_key (name)
 end
 
 function account.load (name)
-	assert (name, errno.INVALID_ARGUMENT)
+	assert (name)
 
 	local acc = { name = name }
 
@@ -40,18 +33,14 @@ function account.load (name)
 end
 
 function account.create (name, password)
-	assert (name and #name < 24 and password and #password < 24, errno.INVALID_ARGUMENT)
+	assert (name and #name < 24 and password and #password < 24)
 	
 	local id = id_handler ()
 	local connection, key = make_key (name)
-	if connection:hsetnx (key, "account", id) == 0 then
-		error (errno.ACCOUNT_EXISTS)
-	end
+	assert (connection:hsetnx (key, "account", id) ~= 0)
 
 	local salt, verifier = srp.create_verifier (name, password)
-	if connection:hmset (key, "salt", salt, "verifier", verifier) == 0 then
-		error (errno.INTERNAL_ERROR)
-	end
+	assert (connection:hmset (key, "salt", salt, "verifier", verifier) ~= 0)
 
 	return id
 end

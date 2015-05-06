@@ -13,10 +13,8 @@ local move_handler = require "agent.move_handler"
 local combat_handler = require "agent.combat_handler"
 
 
-local gamed = ...
+local gamed = tonumber (...)
 local database
-
-local traceback = debug.traceback
 
 local host, send_request = protoloader.load (protoloader.GAME)
 
@@ -66,10 +64,12 @@ local function heartbeat_check ()
 	end
 end
 
+local traceback = debug.traceback
 local REQUEST
 local function handle_request (name, args, response)
 	local f = REQUEST[name]
 	if f then
+		logger.debugf ("REQUEST(%s)\n%s", name, logger.dump (args))
 		local ok, ret = xpcall (f, traceback, user, args)
 		if not ok then
 			logger.warningf ("handle message(%s) failed : %s", name, ret) 

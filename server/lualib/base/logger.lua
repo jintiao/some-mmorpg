@@ -1,6 +1,7 @@
 local skynet = require "skynet"
 
 local config = require "config.system"
+local print_r = require "print_r"
 
 local logger = {
 	LEVEL_DEBUG = 1,
@@ -74,6 +75,31 @@ function logger.name (name)
 	lstr = "[" .. name .. "]"
 	wstr = "[" .. name .. "]"
 	estr = "[" .. name .. "]"
+end
+
+function logger.dump (root)
+	if type (root) ~= "table" then
+		return tostring (root)
+	end
+
+	local cache = { [root] = "." }
+	local function _dump (t, space, name)
+		local temp = {}
+		for k, v in pairs (t) do
+			local key = tostring (k)
+			if cache[v] then
+				table.insert (temp, "+" .. key .. " {" .. cache[v] .. "}")
+			elseif type (v) == "table" then
+				local newkey = name .. "." .. key
+				cache[v] = newkey
+				table.insert (temp, "+" .. key .. _dump (v, space .. (next (t, k) and "|" or " ") .. string.rep (" ", #key), newkey))
+			else
+				table.insert (temp, "+" .. key .. " [" .. tostring (v) .. "]")
+			end
+		end
+		return table.concat (temp, "\n" .. space)
+	end
+	return _dump (root, "", "")
 end
 
 logger.name (SERVICE_NAME)

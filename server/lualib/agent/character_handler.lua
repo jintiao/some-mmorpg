@@ -2,7 +2,6 @@ local skynet = require "skynet"
 local sharedata = require "sharedata"
 
 local logger = require "logger"
-local errno = require "errno"
 local dbpacker = require "db.packer"
 local handler = require "agent.handler"
 
@@ -19,48 +18,42 @@ handler:init (function ()
 end)
 
 local function load_list (account)
-	local list
-	ok, list = skynet.call (database, "lua", "character", "list", account)
-	if not ok then
-		list = {}
-	else
+	local list = skynet.call (database, "lua", "character", "list", account)
+	if list then
 		list = dbpacker.unpack (list)
+	else
+		list = {}
 	end
 	return list
 end
 
-local function check_list_id (account, id)
+local function check_character (account, id)
 	local list = load_list (account)
 	for _, v in pairs (list) do
 		if v == id then return true end
 	end
 end
 
-function REQUEST:character_list ()
-	local list = load_list (self.account)
+function REQUEST.character_list (user)
+	local list = load_list (user.account)
 	local character = {}
 	for _, id in pairs (list) do
-		local ok, c = skynet.call (database, "lua", "character", "load", id)
-		if ok then
+		local c = skynet.call (database, "lua", "character", "load", id)
+		if c then
 			character[id] = dbpacker.unpack (c)
 		end
 	end
 	return { character = character }
 end
 
-local function create (id, name, race, class)
-	logger.debugf ("creating character id(%d) name(%s) race(%s) class(%s)", id, name, race, class)
+local function create (name, race, class)
+	assert (name and race and class)
+	assert (#name > 4 and #name < 24)
+	assert (gdd.class[class])
 
-	if not id or not name or not race or not class then return end
-
-	local r = gdd.race[race]
-	if not r then return end
-
-	local c = gdd.class[class]
-	if not c then return end
+	local r = gdd.race[race] or error ()
 
 	local character = { 
-		id = id,
 		general = {
 			name = name,
 			race = race,
@@ -79,42 +72,32 @@ local function create (id, name, race, class)
 	return character
 end
 
-function REQUEST:character_create (args)
-	assert (args, errno.INVALID_ARGUMENT)
-	local c = args.character
-	assert (c, errno.INVALID_ARGUMENT)
-	local name = c.name
-	assert (name and #name < 24, errno.INVALID_ARGUMENT)
+function REQUEST.character_create (user, args)
+	local c = args.character or error ()
 
-	local ok
-	ok, id = skynet.call (database, "lua", "character", "reserve", name)
-	assert (ok, errno.NAME_ALREADY_USED)
+	local character = create (c.name, c.race, c.class)
+	local id = skynet.call (database, "lua", "character", "reserve", c.name)
+	if not id then return {} end
 
-	local character = create (id, name, c.race, c.class)
-	assert (character, errno.INVALID_ARGUMENT)
-
+	character.id = id
 	local json = dbpacker.pack (character)
 	skynet.call (database, "lua", "character", "save", id, json)
 
-	local list = load_list (self.account)
+	local list = load_list (user.account)
 	table.insert (list, id)
 	json = dbpacker.pack (list)
-	skynet.call (database, "lua", "character", "savelist", self.account, json)
+	skynet.call (database, "lua", "character", "savelist", user.account, json)
 
 	return { character = character }
 end
 
-function REQUEST:character_pick (args)
-	assert (args, errno.INVALID_ARGUMENT)
-	local id = assert (args.id, errno.INVALID_ARGUMENT)
+function REQUEST.character_pick (user, args)
+	local id = args.id or error ()
+	assert (check_character (user.account, id))
 
-	assert (check_list_id (self.account, id), errno.CHARACTER_NOT_EXISTS)
-
-	local ok, c = skynet.call (database, "lua", "character", "load", id)
-	assert (ok, errno.CHARACTER_NOT_EXISTS)
-
+	local c = skynet.call (database, "lua", "character", "load", id) or error ()
 	local character = dbpacker.unpack (c)
-	self.character = character
+	user.character = character
 
 	local world = skynet.uniqueservice ("world")
 	skynet.call (world, "lua", "character_enter", id)
