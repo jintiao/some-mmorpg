@@ -48,9 +48,6 @@ login 4 {
 		session 0 : integer		# login session id
 		token 1 : string		# encryped token
 	}
-	response {
-		account 0 : integer		# user account id
-	}
 }
 
 ]]

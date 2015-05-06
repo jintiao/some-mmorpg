@@ -1,5 +1,4 @@
 local skynet = require "skynet"
-local socketdriver = require "socketdriver"
 
 local gateserver = require "gameserver.gateserver"
 local logger = require "logger"
@@ -40,14 +39,10 @@ function gameserver.start (gamed)
 		local type, name, args, response = host:dispatch (msg, sz)
 		assert (type == "REQUEST")
 		assert (name == "login")
-		local session = assert (tonumber (args.session))
-		local token = assert (args.token)
-		local account = gamed.auth_handler (session, token)
+		assert (args.session and args.token)
+		local session = tonumber (args.session) or error ()
+		local account = gamed.auth_handler (session, args.token) or error ()
 		assert (account)
-
-		local package = string.pack (">s2", response { account = account })
-		socketdriver.send (fd, package)
-
 		return account
 	end
 

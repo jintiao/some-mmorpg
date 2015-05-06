@@ -151,12 +151,6 @@ function RESPONSE:challenge (args)
 	fd = assert (socket.connect (gameserver.addr, gameserver.port))
 	print (string.format ("game server connected, fd = %d", fd))
 	send_request ("login", { session = user.session, token = token })
-end
-
-function RESPONSE:login (args)
-	print "RESPONSE.login"
-
-	user.account = args.account
 
 	host = sproto.new (game_proto.s2c):host "package"
 	request = host:attach (sproto.new (game_proto.c2s))
