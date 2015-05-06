@@ -134,12 +134,10 @@ local function do_verify (account, secret, name)
 	local text = aes.decrypt (secret, t.key)
 	assert (text)
 
-	local tlen = #t.token
-	local klen = #name
-	assert (#text == tlen + klen)
-	assert (text:sub (1, tlen) == t.token)
-	assert (text:sub (tlen + 1) == name)
+	local s = t.token .. name
+	assert (text == s)
 
+	cache_token[account] = nil
 	return true
 end
 
