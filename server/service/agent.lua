@@ -6,7 +6,6 @@ local socket = require "socket"
 local logger = require "logger"
 local protoloader = require "protoloader"
 local character_handler = require "agent.character_handler"
-local world_handler = require "agent.world_handler"
 local map_handler = require "agent.map_handler"
 local aoi_handler = require "agent.aoi_handler"
 local move_handler = require "agent.move_handler"
@@ -16,7 +15,7 @@ local combat_handler = require "agent.combat_handler"
 local gamed = tonumber (...)
 local database
 
-local host, send_request = protoloader.load (protoloader.GAME)
+local host, proto_request = protoloader.load (protoloader.GAME)
 
 --[[
 .user {
@@ -41,7 +40,7 @@ local session = {}
 local session_id = 0
 local function send_request (name, args)
 	session_id = session_id + 1
-	local str = send_request (name, args, session_id)
+	local str = proto_request (name, args, session_id)
 	send_msg (user_fd, str)
 	session[session_id] = { name = name, args = args }
 end
@@ -70,13 +69,14 @@ local function handle_request (name, args, response)
 	local f = REQUEST[name]
 	if f then
 		logger.debugf ("REQUEST(%s)\n%s", name, logger.dump (args))
-		local ok, ret = xpcall (f, traceback, user, args)
+		local ok, ret = xpcall (f, traceback, args)
 		if not ok then
 			logger.warningf ("handle message(%s) failed : %s", name, ret) 
 			kick_self ()
 		else
 			last_heartbeat_time = skynet.now ()
 			if response and ret then
+				logger.debugf ("RESPONSE(%s)\n%s", name, logger.dump (ret))
 				send_msg (user_fd, response (ret))
 			end
 		end
@@ -102,7 +102,7 @@ local function handle_response (id, args)
 		return
 	end
 
-	local ok, ret = xpcall (f, traceback, user, s.args, args)
+	local ok, ret = xpcall (f, traceback, s.args, args)
 	if not ok then
 		logger.warningf ("handle response(%d-%s) failed : %s", id, s.name, ret) 
 		kick_self ()
@@ -163,20 +163,17 @@ function CMD.close ()
 		account = user.account
 
 		if user.map then
-			logger.debug ("leave map")
 			skynet.call (user.map, "lua", "character_leave")
 			user.map = nil
-			map_handler.unregister (user)
-			aoi_handler.unregister (user)
-			move_handler.unregister (user)
-			combat_handler.unregister (user)
+			map_handler:unregister (user)
+			aoi_handler:unregister (user)
+			move_handler:unregister (user)
+			combat_handler:unregister (user)
 		end
 
 		if user.world then
-			logger.debug ("leave world")
 			skynet.call (user.world, "lua", "character_leave", user.character.id)
 			user.world = nil
-			world_handler.unregister (user)
 		end
 
 		character_handler.save (user.character)
@@ -190,6 +187,7 @@ function CMD.close ()
 end
 
 function CMD.kick ()
+	error ()
 	logger.debug ("agent kicked")
 	skynet.call (gamed, "lua", "kick", skynet.self (), user_fd)
 end
@@ -197,26 +195,22 @@ end
 function CMD.world_enter (world)
 	local name = string.format ("agent:%d:%s", user.character.id, user.character.general.name)
 	logger.name (name)
-	logger.debugf ("world(%d) entered", world)
 
 	character_handler.init (user.character)
 
 	user.world = world
-	character_handler.unregister (user)
-	world_handler.register (user)
+	character_handler:unregister (user)
 
 	return user.character.general.map, user.character.movement.pos
 end
 
 function CMD.map_enter (map)
-	logger.debugf ("map(%d) entered", map)
-	
 	user.map = map
 
-	map_handler.register (user)
-	aoi_handler.register (user)
-	move_handler.register (user)
-	combat_handler.register (user)
+	map_handler:register (user)
+	aoi_handler:register (user)
+	move_handler:register (user)
+	combat_handler:register (user)
 end
 
 skynet.start (function ()
@@ -231,7 +225,7 @@ skynet.start (function ()
 				return
 			end
 
-			local ok, ret = xpcall (f, traceback, user, ...)
+			local ok, ret = xpcall (f, traceback, ...)
 			if not ok then
 				logger.warningf ("handle message(%s) failed : %s", command, ret) 
 				kick_self ()

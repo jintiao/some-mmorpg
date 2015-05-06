@@ -1,25 +1,38 @@
 local skynet = require "skynet"
+
 local logger = require "logger"
-local print_r = require "print_r"
+local handler = require "agent.handler"
 
-local handler = {}
+
 local REQUEST = {}
+local user
+handler = handler.new (REQUEST)
 
-function REQUEST:move_blink (args)
-	assert (args and args.destination)
+handler:init (function (u)
+	user = u
+end)
 
-	local npos = args.destination
-	local opos = self.character.movement.pos
-	self.character.movement.pos = npos
+
+function REQUEST.move (args)
+	assert (args and args.pos)
+
+	local npos = args.pos
+	local opos = user.character.movement.pos
+	for k, v in pairs (opos) do
+		if not npos[k] then
+			npos[k] = v
+		end
+	end
+	user.character.movement.pos = npos
 	
-	local writer = self.character_writer
+	local writer = user.character_writer
 	if writer then
 		writer:commit ()
 	end
 	
-	local ok = skynet.call (self.map, "lua", "move_blink", npos) 
+	local ok = skynet.call (user.map, "lua", "move_blink", npos) 
 	if not ok then
-		self.character.movement.pos = opos
+		user.character.movement.pos = opos
 		if writer then
 			writer:commit ()
 		end
@@ -29,19 +42,4 @@ function REQUEST:move_blink (args)
 	return { pos = npos }
 end
 
-function handler:register ()
-	local t = self.REQUEST
-	for k, v in pairs (REQUEST) do
-		t[k] = v
-	end
-end
-
-function handler:unregister ()
-	local t = self.REQUEST
-	for k, _ in pairs (REQUEST) do
-		t[k] = nil
-	end
-end
-
 return handler
-

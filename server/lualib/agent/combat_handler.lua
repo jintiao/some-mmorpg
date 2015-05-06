@@ -1,52 +1,44 @@
 local skynet = require "skynet"
 
 local logger = require "logger"
+local handler = require "agent.handler"
 local aoi_handler = require "agent.aoi_handler"
 
 
-local handler = {}
 local REQUEST = {}
+local user
+handler = handler.new (REQUEST)
 
-function REQUEST:combat_melee_attack (args)
+handler:init (function (u)
+	user = u
+end)
+
+
+function REQUEST.combat (args)
 	local tid = args.target
 	assert (tid)
 
-	local t = self.subscribing[tid]
+	local t = user.subscribing[tid]
 	assert (t and t.agent)
 
-	local damage = self.character.attribute.attack_power
-	damage = skynet.call (t.agent, "lua", "combat_melee_damage", self.character.id, damage) 
+	local damage = user.character.attribute.attack_power
+	damage = skynet.call (t.agent, "lua", "combat_melee_damage", user.character.id, damage) 
 
 	return { target = tid, damage = damage }
 end
 
-function REQUEST:combat_melee_damage (attacker, damage)
+function REQUEST.combat_melee_damage (attacker, damage)
 	damage = math.floor (damage * 0.75)
 
-	hp = self.character.attribute.health - damage
+	hp = user.character.attribute.health - damage
 	if hp <= 0 then
 		damage = damage + hp
-		hp = self.character.attribute.health_max
+		hp = user.character.attribute.health_max
 	end
-	self.character.attribute.health = hp
+	user.character.attribute.health = hp
 
-	aoi_handler.boardcast_attribute (self)
+	aoi_handler.boardcast_attribute (user)
 	return damage
 end
 
-function handler:register ()
-	local t = self.REQUEST
-	for k, v in pairs (REQUEST) do
-		t[k] = v
-	end
-end
-
-function handler:unregister ()
-	local t = self.REQUEST
-	for k, _ in pairs (REQUEST) do
-		t[k] = nil
-	end
-end
-
 return handler
-

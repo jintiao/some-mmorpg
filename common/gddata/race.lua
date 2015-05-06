@@ -9,7 +9,7 @@ local race = {
 	},
 	["orc"] = {
 		name = "orc",
-		home = "Orgrimma",
+		home = "Orgrimmar",
 		pos_x = 900,
 		pos_y = 10,
 		pos_z = 900,

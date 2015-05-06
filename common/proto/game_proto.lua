@@ -117,16 +117,16 @@ character_pick 2 {
 map_ready 100 {
 }
 
-move_blink 200 {
+move 200 {
 	request {
-		destination 0 : position
+		pos 0 : position
 	}
 	response {
 		pos 0 : position
 	}
 }
 
-combat_melee_attack 400 {
+combat 400 {
 	request {
 		target 0 : integer
 	}

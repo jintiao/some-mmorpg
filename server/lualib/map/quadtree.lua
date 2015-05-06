@@ -23,7 +23,7 @@ function quadtree:insert (id, x, y)
 	else
 		self.object[id] = { x = x, y = y }
 
-		if #self.object >= 20 then
+		if #self.object >= 2 then
 			return self:subdivide (id)
 		end
 

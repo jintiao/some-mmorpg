@@ -55,6 +55,8 @@ function CMD.character_ready (agent, pos)
 	for _, a in pairs (list) do
 		skynet.call (a, "lua", "aoi_add", t)
 	end
+
+	return true
 end
 
 function CMD.move_blink (agent, pos)

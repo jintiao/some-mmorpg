@@ -9,10 +9,12 @@ local handler = require "agent.handler"
 local REQUEST = {}
 handler = handler.new (REQUEST)
 
+local user
 local database
 local gdd
 
-handler:init (function ()
+handler:init (function (u)
+	user = u
 	database = skynet.uniqueservice ("database")
 	gdd = sharedata.query "gdd"
 end)
@@ -32,9 +34,10 @@ local function check_character (account, id)
 	for _, v in pairs (list) do
 		if v == id then return true end
 	end
+	return false
 end
 
-function REQUEST.character_list (user)
+function REQUEST.character_list ()
 	local list = load_list (user.account)
 	local character = {}
 	for _, id in pairs (list) do
@@ -48,7 +51,7 @@ end
 
 local function create (name, race, class)
 	assert (name and race and class)
-	assert (#name > 4 and #name < 24)
+	assert (#name > 2 and #name < 24)
 	assert (gdd.class[class])
 
 	local r = gdd.race[race] or error ()
@@ -72,7 +75,7 @@ local function create (name, race, class)
 	return character
 end
 
-function REQUEST.character_create (user, args)
+function REQUEST.character_create (args)
 	local c = args.character or error ()
 
 	local character = create (c.name, c.race, c.class)
@@ -91,7 +94,7 @@ function REQUEST.character_create (user, args)
 	return { character = character }
 end
 
-function REQUEST.character_pick (user, args)
+function REQUEST.character_pick (args)
 	local id = args.id or error ()
 	assert (check_character (user.account, id))
 

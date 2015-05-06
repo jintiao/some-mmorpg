@@ -15,7 +15,7 @@ end
 
 function handler:register (user)
 	for _, f in pairs (self.init_func) do
-		f ()
+		f (user)
 	end
 
 	local req = self.request

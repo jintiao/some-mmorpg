@@ -1,5 +1,4 @@
 local quadtree = require "map.quadtree"
-local print_r = require "print_r"
 
 local aoi = {}
 
