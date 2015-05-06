@@ -24,8 +24,6 @@ function gamed.open (config)
 
 	skynet.uniqueservice ("gdd")
 	skynet.uniqueservice ("world")
-
-	skynet.call (logind, "lua", "register", config.name)	
 end
 
 function gamed.command_handler (cmd, ...)
@@ -46,8 +44,8 @@ function gamed.command_handler (cmd, ...)
 	return f (...)
 end
 
-function gamed.auth_handler (account, token)
-	return skynet.call (logind, "lua", "verify", account, token)	
+function gamed.auth_handler (session, token)
+	return skynet.call (logind, "lua", "verify", session, token)	
 end
 
 function gamed.login_handler (fd, account)

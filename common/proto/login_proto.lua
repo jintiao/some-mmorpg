@@ -10,31 +10,46 @@ login_proto.c2s = sparser.parse [[
 
 handshake 1 {
 	request {
-		name 0 : string
-		client_pub 1 : string
+		name 0 : string		# username        
+		client_pub 1 : string		# srp argument, client public key, known as 'A'
 	}
 	response {
-		user_exists 0 : boolean
-		salt 1 : string
-		server_pub 2 : string
+		user_exists 0 : boolean		# 'true' if username is already used
+		salt 1 : string		# srp argument, salt, known as 's'
+		server_pub 2 : string		# srp argument, server public key, known as 'B'
 	}
 }
 
 auth 2 {
 	request {
-		name 0 : string
-		password 1 : string
+		name 0 : string		# encrypted username
+		password 1 : string		# encrypted password. send this ONLY IF you're registrying new account
 	}
 	response {
-		account 0 : integer
-		token 1 : string
+		session 0 : integer		# login session id, needed for further use
+		expire 1 : integer		# session expire time, in second
+		challenge 2 : string		# token request challenge
 	}
 }
 
-login 3 {
+challenge 3 {
 	request {
-		account 0 : integer
-		token 1 : string
+		session 0 : integer		# login session id
+		challenge 1 : string		# encryped challenge
+	}
+	response {
+		token 0 : string		# login token
+		challenge 1 : string		# next token challenge
+	}
+}
+
+login 4 {
+	request {
+		session 0 : integer		# login session id
+		token 1 : string		# encryped token
+	}
+	response {
+		account 0 : integer		# user account id
 	}
 }
 

@@ -39,10 +39,10 @@ function gameserver.start (gamed)
 		local type, name, args, response = host:dispatch (msg, sz)
 		assert (type == "REQUEST")
 		assert (name == "login")
-		local account = assert (tonumber (args.account))
+		local session = assert (tonumber (args.session))
 		local token = assert (args.token)
-		local ok = gamed.auth_handler (account, token)
-		assert (ok == true)
+		local account = gamed.auth_handler (session, token)
+		assert (account)
 		return account
 	end
 

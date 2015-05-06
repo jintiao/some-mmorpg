@@ -6,14 +6,17 @@ local protoloader = require "protoloader"
 local srp = require "srp"
 local aes = require "aes"
 
+local traceback = debug.traceback
+
 
 local master
 local database
 local host
 local auth_timeout
-local token_expire_time
+local session_expire_time
+local session_expire_time_in_second
 local connection = {}
-local cache_token = {}
+local saved_session = {}
 
 local slaved = {}
 
@@ -24,7 +27,8 @@ function CMD.init (m, id, conf)
 	database = skynet.uniqueservice ("database")
 	host = protoloader.load (protoloader.LOGIN)
 	auth_timeout = conf.auth_timeout * 100
-	token_expire_time = conf.token_expire_time * 100
+	session_expire_time = conf.session_expire_time * 100
+	session_expire_time_in_second = conf.session_expire_time
 end
 
 local function close (fd)
@@ -50,10 +54,10 @@ local function send_msg (fd, msg)
 	socket.write (fd, package)
 end
 
-local function do_auth (fd, addr)
+function CMD.auth (fd, addr)
 	connection[fd] = addr
 	skynet.timeout (auth_timeout, function ()
-		if connection[fd] then
+		if connection[fd] == addr then
 			logger.warningf ("connection %d from %s auth timeout!", fd, addr)
 			close (fd)
 		end
@@ -64,96 +68,109 @@ local function do_auth (fd, addr)
 
 	local type, name, args, response = read_msg (fd)
 	assert (type == "REQUEST")
-	assert (name == "handshake")
-	assert (args and args.name and args.client_pub)
 
-	local account = skynet.call (database, "lua", "account", "load", args.name)
-	assert (account)
+	if name == "handshake" then
+		assert (args and args.name and args.client_pub)
 
-	local session_key, _, pkey = srp.create_server_session_key (account.verifier, args.client_pub)
-	local msg = response {
+		local account = skynet.call (database, "lua", "account", "load", args.name) or error ()
+
+		local session_key, _, pkey = srp.create_server_session_key (account.verifier, args.client_pub)
+		local msg = response {
 					user_exists = (account.id ~= nil),
 					salt = account.salt,
 					server_pub = pkey,
 				}
-	send_msg (fd, msg)
+		send_msg (fd, msg)
 
-	type, name, args, response = read_msg (fd)
-	assert (type == "REQUEST")
-	assert (name == "auth")
-	assert (args and args.name)
+		type, name, args, response = read_msg (fd)
+		assert (type == "REQUEST")
+		assert (name == "auth")
+		assert (args and args.name)
 
-	local realname = aes.decrypt (args.name, session_key)
-	assert (realname == account.name)
+		local realname = aes.decrypt (args.name, session_key)
+		assert (realname == account.name)
 
-	local id = tonumber (account.id)
-	if not id then
-		assert (args.password)
-		local password = aes.decrypt (args.password, session_key)
-		id = skynet.call (database, "lua", "account", "create", realname, password)
-		assert (id)
-	end
+		local id = tonumber (account.id)
+		if not id then
+			assert (args.password)
+			local password = aes.decrypt (args.password, session_key)
+			id = skynet.call (database, "lua", "account", "create", realname, password) or error ()
+		end
 		
-	local token = srp.random ()
+		local challenge = srp.random ()
+		local session = skynet.call (master, "lua", "save_session", id, session_key, challenge)
 
-	msg = response {
-			account = id,
+		msg = response {
+				session = session,
+				expire = session_expire_time_in_second,
+				challenge = challenge,
+			}
+		send_msg (fd, msg)
+		
+		type, name, args, response = read_msg (fd)
+		assert (type == "REQUEST")
+	end
+
+	assert (name == "challenge")
+	assert (args and args.session and args.challenge)
+
+	local token, challenge = skynet.call (master, "lua", "challenge", args.session, args.challenge)
+	assert (token and challenge)
+
+	local msg = response {
 			token = token,
-		}
+			challenge = challenge,
+	}
 	send_msg (fd, msg)
 
-	return id, session_key, token
-end
-
-local traceback = debug.traceback
-function CMD.auth (fd, addr)
-	local ok, id, key, token = xpcall (do_auth, traceback, fd, addr)
-	if not ok then
-		logger.logf ("connection %s (fd = %d) auth failed! %s", addr, fd, id)
-		return
-	end
 	close (fd)
-
-	return id, key, token
 end
 
-function CMD.cache (account, key, token)
-	cache_token[account] = { key = key, token = token }
-	skynet.timeout (token_expire_time, function ()
-		local t = cache_token[account]
-		if t and t.token == token then
-			cache_token[account] = nil
+function CMD.save_session (session, account, key, challenge)
+	saved_session[session] = { account = account, key = key, challenge = challenge }
+	skynet.timeout (session_expire_time, function ()
+		local t = saved_session[session]
+		if t and t.key == key then
+			saved_session[session] = nil
 		end
 	end)
 end
 
-local function do_verify (account, secret, name)
-	local t = cache_token[account]
-	assert (t)
+function CMD.challenge (session, secret)
+	local t = saved_session[session] or error ()
 
-	local text = aes.decrypt (secret, t.key)
-	assert (text)
+	local text = aes.decrypt (secret, t.key) or error ()
+	assert (text == t.challenge)
 
-	local s = t.token .. name
-	assert (text == s)
+	t.token = srp.random ()
+	t.challenge = srp.random ()
 
-	cache_token[account] = nil
-	return true
+	return t.token, t.challenge
 end
 
-function CMD.verify (account, secret, name)
-	local ok, ret = xpcall (do_verify, traceback, account, secret, name)
-	if not ok then
-		logger.logf ("account %d from %s verify failed! %s", account, name, ret)
-		return
-	end
-	return ret
+function CMD.verify (session, secret)
+	local t = saved_session[session] or error ()
+
+	local text = aes.decrypt (secret, t.key) or error ()
+	assert (text == t.token)
+	t.token = nil
+
+	return t.account
 end
 
 skynet.start (function ()
 	skynet.dispatch ("lua", function (_, _, command, ...)
+		local function pret (ok, ...)
+			if not ok then 
+				logger.warningf (...)
+				skynet.ret ()
+			else
+				skynet.retpack (...)
+			end
+		end
+
 		local f = assert (CMD[command])
-		skynet.retpack (f (...))
+		pret (xpcall (f, traceback, ...))
 	end)
 end)
 

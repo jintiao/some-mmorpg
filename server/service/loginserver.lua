@@ -5,13 +5,14 @@ local logger = require "logger"
 local config = require "config.system"
 
 
+local session_id = 1
 local slave = {}
 local nslave
 local gameserver = {}
 
 local CMD = {}
 
-function CMD.open (_, conf)
+function CMD.open (conf)
 	for i = 1, conf.slave do
 		local s = skynet.newservice ("loginslave")
 		skynet.call (s, "lua", "init", skynet.self (), i, conf)
@@ -31,27 +32,32 @@ function CMD.open (_, conf)
 		balance = balance + 1
 		if balance > nslave then balance = 1 end
 
-		account, key, token = skynet.call (s, "lua", "auth", fd, addr)
-		if account and key and token then
-			s = slave[(account % nslave) + 1]
-			skynet.call (s, "lua", "cache", account, key, token)
-		end
+		skynet.call (s, "lua", "auth", fd, addr)
 	end)
 end
 
-function CMD.register (id, name)
-	gameserver[id] = name
+function CMD.save_session (account, key, challenge)
+	session = session_id
+	session_id = session_id + 1
+
+	s = slave[(session % nslave) + 1]
+	skynet.call (s, "lua", "save_session", session, account, key, challenge)
+	return session
 end
 
-function CMD.verify (from, account, token)
-	local name = gameserver[from]
-	local s = slave[(account % nslave) + 1]
-	return skynet.call (s, "lua", "verify", account, token, name)
+function CMD.challenge (session, challenge)
+	s = slave[(session % nslave) + 1]
+	return skynet.call (s, "lua", "challenge", session, challenge)
+end
+
+function CMD.verify (session, token)
+	local s = slave[(session % nslave) + 1]
+	return skynet.call (s, "lua", "verify", session, token)
 end
 
 skynet.start (function ()
-	skynet.dispatch ("lua", function (_, from, command, ...)
+	skynet.dispatch ("lua", function (_, _, command, ...)
 		local f = assert (CMD[command])
-		skynet.retpack (f (from, ...))
+		skynet.retpack (f (...))
 	end)
 end)

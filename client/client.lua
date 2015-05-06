@@ -137,15 +137,30 @@ end
 
 function RESPONSE:auth (args)
 	print ("RESPONSE.auth")
-	user.account = args.account
-	local token = aes.encrypt (args.token .. gameserver.name, user.session_key)
+
+	user.session = args.session
+	local challenge = aes.encrypt (args.challenge, user.session_key)
+	send_request ("challenge", { session = args.session, challenge = challenge })
+end
+
+function RESPONSE:challenge (args)
+	print ("RESPONSE.challenge")
+
+	local token = aes.encrypt (args.token, user.session_key)
 
 	fd = assert (socket.connect (gameserver.addr, gameserver.port))
 	print (string.format ("game server connected, fd = %d", fd))
-	send_request ("login", { account = args.account, token = token })
+	send_request ("login", { session = user.session, token = token })
+end
+
+function RESPONSE:login (args)
+	print "RESPONSE.login"
+
+	user.account = args.account
 
 	host = sproto.new (game_proto.s2c):host "package"
 	request = host:attach (sproto.new (game_proto.c2s))
+
 	send_request ("character_list")
 end
 
