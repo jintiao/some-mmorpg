@@ -1,6 +1,8 @@
 local skynet = require "skynet"
+
 local logger = require "logger"
 local aoi = require "map.aoi"
+
 
 local world
 local conf
@@ -20,19 +22,16 @@ function CMD.character_enter (_, agent, character)
 	logger.logf ("character(%d) loading map", character)
 
 	pending_character[agent] = character
-	skynet.call (agent, "lua", "map_enter")
+	skynet.call (agent, "lua", "map_enter", skynet.self ())
 end
 
 function CMD.character_leave (agent)
 	local character = online_character[agent] or pending_character[agent]
 	if character ~= nil then
 		logger.logf ("character(%d) leave map", character)
-		local ok, notify_list = aoi.remove (agent)
+		local ok, list = aoi.remove (agent)
 		if ok then
-			local t = { [agent] = agent }
-			for _, a in pairs (notify_list) do
-				skynet.call (a, "lua", "aoi_remove", t)
-			end
+			skynet.call (agent, "lua", "aoi_manage", nil, list)
 		end
 	end
 	online_character[agent] = nil
@@ -49,35 +48,14 @@ function CMD.character_ready (agent, pos)
 	local ok, list = aoi.insert (agent, pos)
 	if not ok then return false end
 
-	skynet.call (agent, "lua", "aoi_add", list)
-
-	local t = { agent }
-	for _, a in pairs (list) do
-		skynet.call (a, "lua", "aoi_add", t)
-	end
-
+	skynet.call (agent, "lua", "aoi_manage", list)
 	return true
 end
 
 function CMD.move_blink (agent, pos)
 	local ok, add, update, remove = aoi.update (agent, pos)
-	if not ok then return false end
-
-	skynet.call (agent, "lua", "aoi_add", add)
-	skynet.call (agent, "lua", "aoi_move", update)
-	skynet.call (agent, "lua", "aoi_remove", remove)
-
-	local t = { [agent] = agent }
-	for _, a in pairs (add) do
-		skynet.call (a, "lua", "aoi_add", t)
-	end
-	for _, a in pairs (update) do
-		skynet.call (a, "lua", "aoi_move", t)
-	end
-	for _, a in pairs (remove) do
-		skynet.call (a, "lua", "aoi_remove", t)
-	end
-
+	if not ok then return end
+	skynet.call (agent, "lua", "aoi_manage", add, remove, update, "move")
 	return true
 end
 

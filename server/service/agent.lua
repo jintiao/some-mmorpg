@@ -102,6 +102,8 @@ local function handle_response (id, args)
 		return
 	end
 
+	logger.debugf ("handle response(%s)\n%s", s.name, logger.dump (args))
+
 	local ok, ret = xpcall (f, traceback, s.args, args)
 	if not ok then
 		logger.warningf ("handle response(%d-%s) failed : %s", id, s.name, ret) 
@@ -129,7 +131,7 @@ skynet.register_protocol {
 
 local CMD = {}
 
-function CMD.open (from, fd, account)
+function CMD.open (fd, account)
 	local name = string.format ("agent:%d", account)
 	logger.name (name)
 	logger.debug ("agent opened")
@@ -139,11 +141,8 @@ function CMD.open (from, fd, account)
 		account = account,
 		REQUEST = {},
 		RESPONSE = {},
+		CMD = CMD,
 		send_request = send_request,
-
-		subscribing = {},
-		agent2cid = {},
-		subscriber = {}
 	}
 	user_fd = user.fd
 	REQUEST = user.REQUEST
@@ -214,24 +213,20 @@ function CMD.map_enter (map)
 end
 
 skynet.start (function ()
-	skynet.dispatch ("lua", function (_, from, command, ...)
+	skynet.dispatch ("lua", function (_, _, command, ...)
 		local f = CMD[command]
-		if f then
-			skynet.retpack (f (from, ...))
-		else
-			f = REQUEST[command]
-			if not f then
-				logger.warningf ("unhandled message(%s)", command) 
-				return
-			end
-
-			local ok, ret = xpcall (f, traceback, ...)
-			if not ok then
-				logger.warningf ("handle message(%s) failed : %s", command, ret) 
-				kick_self ()
-			end
-			skynet.retpack (ret)
+		if not f then
+			logger.warningf ("unhandled message(%s)", command) 
+			return skynet.ret ()
 		end
+
+		local ok, ret = xpcall (f, traceback, ...)
+		if not ok then
+			logger.warningf ("handle message(%s) failed : %s", command, ret) 
+			kick_self ()
+			return skynet.ret ()
+		end
+		skynet.retpack (ret)
 	end)
 end)
 

@@ -167,6 +167,9 @@ aoi_update_attribute 3 {
 	request {
 		character 0 : character_aoi_attribute
 	}
+	response {
+		wantmore 0 : boolean
+	}
 }
 ]]
 

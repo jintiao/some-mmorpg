@@ -6,8 +6,9 @@ local aoi_handler = require "agent.aoi_handler"
 
 
 local REQUEST = {}
+local CMD = {}
 local user
-handler = handler.new (REQUEST)
+handler = handler.new (REQUEST, nil, CMD)
 
 handler:init (function (u)
 	user = u
@@ -15,19 +16,18 @@ end)
 
 
 function REQUEST.combat (args)
-	local tid = args.target
-	assert (tid)
+	assert (args and args.target)
 
-	local t = user.subscribing[tid]
-	assert (t and t.agent)
+	local tid = args.target
+	local agent = aoi_handler.find (tid) or error ()
 
 	local damage = user.character.attribute.attack_power
-	damage = skynet.call (t.agent, "lua", "combat_melee_damage", user.character.id, damage) 
+	damage = skynet.call (agent, "lua", "combat_melee_damage", user.character.id, damage) 
 
 	return { target = tid, damage = damage }
 end
 
-function REQUEST.combat_melee_damage (attacker, damage)
+function CMD.combat_melee_damage (attacker, damage)
 	damage = math.floor (damage * 0.75)
 
 	hp = user.character.attribute.health - damage
@@ -37,7 +37,7 @@ function REQUEST.combat_melee_damage (attacker, damage)
 	end
 	user.character.attribute.health = hp
 
-	aoi_handler.boardcast_attribute (user)
+	aoi_handler.boardcast ("attribute")
 	return damage
 end
 

@@ -23,7 +23,7 @@ function CMD.character_enter (agent, character)
 
 	online_character[character] = agent
 	logger.log (string.format ("character(%d) enter world", character))
-	local map, pos = skynet.call (agent, "lua", "world_enter")
+	local map, pos = skynet.call (agent, "lua", "world_enter", skynet.self ())
 		
 	local m = map_instance[map]
 	if not m then
