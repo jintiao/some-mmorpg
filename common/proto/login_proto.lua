@@ -17,12 +17,13 @@ handshake 1 {
 		user_exists 0 : boolean		# 'true' if username is already used
 		salt 1 : string		# srp argument, salt, known as 's'
 		server_pub 2 : string		# srp argument, server public key, known as 'B'
+		challenge 3 : string		# session challenge
 	}
 }
 
 auth 2 {
 	request {
-		name 0 : string		# encrypted username
+		challenge 0 : string		# encrypted challenge
 		password 1 : string		# encrypted password. send this ONLY IF you're registrying new account
 	}
 	response {

@@ -75,20 +75,22 @@ function CMD.auth (fd, addr)
 		local account = skynet.call (database, "lua", "account", "load", args.name) or error ()
 
 		local session_key, _, pkey = srp.create_server_session_key (account.verifier, args.client_pub)
+		local challenge = srp.random ()
 		local msg = response {
 					user_exists = (account.id ~= nil),
 					salt = account.salt,
 					server_pub = pkey,
+					challenge = challenge,
 				}
 		send_msg (fd, msg)
 
 		type, name, args, response = read_msg (fd)
 		assert (type == "REQUEST")
 		assert (name == "auth")
-		assert (args and args.name)
+		assert (args and args.challenge)
 
-		local realname = aes.decrypt (args.name, session_key)
-		assert (realname == account.name)
+		local text = aes.decrypt (args.challenge, session_key)
+		assert (challenge == text)
 
 		local id = tonumber (account.id)
 		if not id then
@@ -97,7 +99,7 @@ function CMD.auth (fd, addr)
 			id = skynet.call (database, "lua", "account", "create", realname, password) or error ()
 		end
 		
-		local challenge = srp.random ()
+		challenge = srp.random ()
 		local session = skynet.call (master, "lua", "save_session", id, session_key, challenge)
 
 		msg = response {

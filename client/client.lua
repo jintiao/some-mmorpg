@@ -124,13 +124,13 @@ function RESPONSE:handshake (args)
 	if args.user_exists then
 		local key = srp.create_client_session_key (name, user.password, args.salt, user.private_key, user.public_key, args.server_pub)
 		user.session_key = key
-		local ret = { name = aes.encrypt (name, key) }
+		local ret = { challenge = aes.encrypt (args.challenge, key) }
 		send_request ("auth", ret)
 	else
 		print (name, constant.default_password)
 		local key = srp.create_client_session_key (name, constant.default_password, args.salt, user.private_key, user.public_key, args.server_pub)
 		user.session_key = key
-		local ret = { name = aes.encrypt (name, key), password = aes.encrypt (user.password, key) }
+		local ret = { challenge = aes.encrypt (challenge, key), password = aes.encrypt (user.password, key) }
 		send_request ("auth", ret)
 	end
 end
