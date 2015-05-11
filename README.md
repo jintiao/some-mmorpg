@@ -14,8 +14,8 @@
 ## 编译依赖
 
 ### 3rd/openssl 
-[参考文档](https://wiki.openssl.org/index.php/Compilation_and_Installation)。
-对于64linux系统，可尝试用命令 "./Configure linux-x86_64 no-shared -fPIC; make"进行编译。
+程序中用到了openssl中的crypto库，请将crypto编译成**静态库**。 [参考文档](https://wiki.openssl.org/index.php/Compilation_and_Installation)。  
+对于64linux系统，可尝试用命令 "./Configure linux-x86_64 no-shared -fPIC; make"进行编译。   
 如果编译出错，请自行google解决。
 
 ### 3rd/skynet
