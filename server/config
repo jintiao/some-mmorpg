@@ -15,5 +15,7 @@ luaservice = skynet_root.."service/?.lua;"..root.."service/?.lua"
 lualoader = skynet_root.."lualib/loader.lua"
 snax = skynet_root.."?.lua;"
 
-daemon = root .. "$SERVER_NAME" .. ".pid"
+if "$OS" == "Linux" then 
+	daemon = root .. "$SERVER_NAME" .. ".pid"
+end
 
