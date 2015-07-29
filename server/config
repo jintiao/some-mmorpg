@@ -2,14 +2,18 @@ skynet_root = "../3rd/skynet/"
 root = "./"
 common = "../common/"
 thread = 8
-logger = nil
+logger = "$SERVER_NAME"
+logservice = "syslog"
 harbor = 0
 start = "main"	-- main script
 bootstrap = "snlua bootstrap"	-- The service for bootstrap
 
 lua_path = skynet_root.."lualib/?.lua;"..root.."lualib/?.lua;"..root.."lualib/base/?.lua;"..common.."?.lua"
 lua_cpath = skynet_root.."luaclib/?.so;"..root.."luaclib/?.so"
-cpath = skynet_root.."cservice/?.so"
+cpath = skynet_root.."cservice/?.so;"..root.."cservice/?.so"
 luaservice = skynet_root.."service/?.lua;"..root.."service/?.lua"
 lualoader = skynet_root.."lualib/loader.lua"
 snax = skynet_root.."?.lua;"
+
+daemon = root .. "$SERVER_NAME" .. ".pid"
+

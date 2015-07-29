@@ -1,3 +1,5 @@
 #!/bin/bash
 
+export SERVER_NAME=smmo
+
 ../3rd/skynet/skynet config
