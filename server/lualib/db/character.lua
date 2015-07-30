@@ -1,4 +1,4 @@
-local logger = require "logger"
+local syslog = require "syslog"
 local packer = require "db.packer"
 
 local character = {}

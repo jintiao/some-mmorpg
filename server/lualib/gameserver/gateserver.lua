@@ -2,7 +2,7 @@ local skynet = require "skynet"
 local netpack = require "netpack"
 local socketdriver = require "socketdriver"
 
-local logger = require "logger"
+local syslog = require "syslog"
 
 
 local gateserver = {}
@@ -37,7 +37,7 @@ function gateserver.forward (fd, agent)
 	local c = connection[fd]
 	if c then
 		c.agent = agent
-		logger.debugf ("start forward fd(%d) to agent(%d)", fd, agent)
+		syslog.debugf ("start forward fd(%d) to agent(%d)", fd, agent)
 	end
 end
 
@@ -48,7 +48,7 @@ function gateserver.start (handler)
 		local port = assert (tonumber (conf.port))
 		maxclient = conf.maxclient or 64
 
-		logger.logf ("listen on %s:%d", addr, port)
+		syslog.noticef ("listen on %s:%d", addr, port)
 		socket = socketdriver.listen (addr, port)
 		socketdriver.start (socket)
 
@@ -79,7 +79,7 @@ function gateserver.start (handler)
 		if c then
 			local agent = c.agent
 			if agent then
-				logger.logf ("fd(%d) disconnected, closing agent(%d)", fd, agent)
+				syslog.noticef ("fd(%d) disconnected, closing agent(%d)", fd, agent)
 				skynet.call (agent, "lua", "close")
 				c.agent = nil
 			else

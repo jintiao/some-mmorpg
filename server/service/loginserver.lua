@@ -1,7 +1,7 @@
 local skynet = require "skynet"
 local socket = require "socket"
 
-local logger = require "logger"
+local syslog = require "syslog"
 local config = require "config.system"
 
 
@@ -24,7 +24,7 @@ function CMD.open (conf)
 	local port = assert (tonumber (conf.port))
 	local sock = socket.listen (host, port)
 
-	logger.logf ("listen on %s:%d", host, port)
+	syslog.noticef ("listen on %s:%d", host, port)
 
 	local balance = 1
 	socket.start (sock, function (fd, addr)

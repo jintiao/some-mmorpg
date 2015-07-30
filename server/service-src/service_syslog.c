@@ -4,9 +4,38 @@
 
 #include "skynet.h"
 
+
+static const char *
+check_msg (const char *msg, size_t sz, int *priority) {
+	if (sz < 2 || msg[1] != '|')
+		return msg;
+	switch (msg[0]) {
+	case 'D':
+		*priority = LOG_DEBUG;
+		break;
+	case 'I':
+		*priority = LOG_INFO;
+		break;
+	case 'N':
+		*priority = LOG_NOTICE;
+		break;
+	case 'W':
+		*priority = LOG_WARNING;
+		break;
+	case 'E':
+		*priority = LOG_ERR;
+		break;
+	default:
+		return msg;
+	}
+	return &msg[2];
+}
+
 static int
 cb (struct skynet_context *ctx, void *ud, int type, int session, uint32_t source, const void *msg, size_t sz) {
-	syslog (LOG_ERR, "[:%08x] %s", source, (const char *)msg);
+	int priority = LOG_WARNING;
+	const char *str = check_msg ((const char *)msg, sz, &priority);
+	syslog (priority, "[:%08x] %s", source, str);
 	return 0;
 }
 

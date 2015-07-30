@@ -3,7 +3,7 @@ local queue = require "skynet.queue"
 local sharemap = require "sharemap"
 local socket = require "socket"
 
-local logger = require "logger"
+local syslog = require "syslog"
 local protoloader = require "protoloader"
 local character_handler = require "agent.character_handler"
 local map_handler = require "agent.map_handler"
@@ -56,7 +56,7 @@ local function heartbeat_check ()
 
 	local t = last_heartbeat_time + HEARTBEAT_TIME_MAX - skynet.now ()
 	if t <= 0 then
-		logger.warning ("heatbeat check failed")
+		syslog.warning ("heatbeat check failed")
 		kick_self ()
 	else
 		skynet.timeout (t, heartbeat_check)
@@ -68,20 +68,20 @@ local REQUEST
 local function handle_request (name, args, response)
 	local f = REQUEST[name]
 	if f then
-		logger.debugf ("REQUEST(%s)\n%s", name, logger.dump (args))
+		syslog.debugf ("REQUEST(%s)\n%s", name, syslog.dump (args))
 		local ok, ret = xpcall (f, traceback, args)
 		if not ok then
-			logger.warningf ("handle message(%s) failed : %s", name, ret) 
+			syslog.warningf ("handle message(%s) failed : %s", name, ret) 
 			kick_self ()
 		else
 			last_heartbeat_time = skynet.now ()
 			if response and ret then
-				logger.debugf ("RESPONSE(%s)\n%s", name, logger.dump (ret))
+				syslog.debugf ("RESPONSE(%s)\n%s", name, syslog.dump (ret))
 				send_msg (user_fd, response (ret))
 			end
 		end
 	else
-		logger.warningf ("unhandled message : %s", name)
+		syslog.warningf ("unhandled message : %s", name)
 		kick_self ()
 	end
 end
@@ -90,23 +90,23 @@ local RESPONSE
 local function handle_response (id, args)
 	local s = session[id]
 	if not s then
-		logger.warningf ("session %d not found", id)
+		syslog.warningf ("session %d not found", id)
 		kick_self ()
 		return
 	end
 
 	local f = RESPONSE[s.name]
 	if not f then
-		logger.warningf ("unhandled response : %s", s.name)
+		syslog.warningf ("unhandled response : %s", s.name)
 		kick_self ()
 		return
 	end
 
-	logger.debugf ("handle response(%s)\n%s", s.name, logger.dump (args))
+	syslog.debugf ("handle response(%s)\n%s", s.name, syslog.dump (args))
 
 	local ok, ret = xpcall (f, traceback, s.args, args)
 	if not ok then
-		logger.warningf ("handle response(%d-%s) failed : %s", id, s.name, ret) 
+		syslog.warningf ("handle response(%d-%s) failed : %s", id, s.name, ret) 
 		kick_self ()
 	end
 end
@@ -123,7 +123,7 @@ skynet.register_protocol {
 		elseif type == "RESPONSE" then
 			handle_response (...)
 		else
-			logger.warningf ("invalid message type : %s", type) 
+			syslog.warningf ("invalid message type : %s", type) 
 			kick_self ()
 		end
 	end,
@@ -133,8 +133,7 @@ local CMD = {}
 
 function CMD.open (fd, account)
 	local name = string.format ("agent:%d", account)
-	logger.name (name)
-	logger.debug ("agent opened")
+	syslog.debug ("agent opened")
 
 	user = { 
 		fd = fd, 
@@ -155,7 +154,7 @@ function CMD.open (fd, account)
 end
 
 function CMD.close ()
-	logger.debug ("agent closed")
+	syslog.debug ("agent closed")
 	
 	local account
 	if user then
@@ -187,13 +186,12 @@ end
 
 function CMD.kick ()
 	error ()
-	logger.debug ("agent kicked")
+	syslog.debug ("agent kicked")
 	skynet.call (gamed, "lua", "kick", skynet.self (), user_fd)
 end
 
 function CMD.world_enter (world)
 	local name = string.format ("agent:%d:%s", user.character.id, user.character.general.name)
-	logger.name (name)
 
 	character_handler.init (user.character)
 
@@ -216,13 +214,13 @@ skynet.start (function ()
 	skynet.dispatch ("lua", function (_, _, command, ...)
 		local f = CMD[command]
 		if not f then
-			logger.warningf ("unhandled message(%s)", command) 
+			syslog.warningf ("unhandled message(%s)", command) 
 			return skynet.ret ()
 		end
 
 		local ok, ret = xpcall (f, traceback, ...)
 		if not ok then
-			logger.warningf ("handle message(%s) failed : %s", command, ret) 
+			syslog.warningf ("handle message(%s) failed : %s", command, ret) 
 			kick_self ()
 			return skynet.ret ()
 		end

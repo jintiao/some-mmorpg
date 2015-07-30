@@ -1,6 +1,6 @@
 local skynet = require "skynet"
 
-local logger = require "logger"
+local syslog = require "syslog"
 local handler = require "agent.handler"
 local aoi_handler = require "agent.aoi_handler"
 

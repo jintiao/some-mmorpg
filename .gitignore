@@ -28,6 +28,7 @@
 *.x86_64
 *.hex
 *.swp
+*.pid
 
 # other files
 var/

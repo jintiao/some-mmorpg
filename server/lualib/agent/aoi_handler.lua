@@ -1,7 +1,7 @@
 local skynet = require "skynet"
 local sharemap = require "sharemap"
 
-local logger = require "logger"
+local syslog = require "syslog"
 local handler = require "agent.handler"
 
 
@@ -60,7 +60,7 @@ local function mark_flag (character, scope, field, value)
 end
 
 local function create_reader ()
-	logger.debug ("aoi_handler create_reader")
+	syslog.debug ("aoi_handler create_reader")
 	if not character_writer then
 		character_writer = sharemap.writer ("character", user.character)
 	end
@@ -68,7 +68,7 @@ local function create_reader ()
 end
 
 local function subscribe (agent, reader)
-	logger.debugf ("aoi_handler aoi_subscribe agent(%d) reader(%s)", agent, reader)
+	syslog.debugf ("aoi_handler aoi_subscribe agent(%d) reader(%s)", agent, reader)
 	local c = sharemap.reader ("character", reader)
 
 	local flag = {}
@@ -88,7 +88,7 @@ local function subscribe (agent, reader)
 end
 
 local function refresh_aoi (id, scope)
-	logger.debugf ("refresh_aoi character(%d) scope(%s)", id, scope)
+	syslog.debugf ("refresh_aoi character(%d) scope(%s)", id, scope)
 
 	local t = subscribe_character[id]
 	if not t then return end
@@ -97,7 +97,7 @@ local function refresh_aoi (id, scope)
 	t = t.flag[scope]
 	if not t then return end
 
-	logger.debugf ("dirty(%s) wantmore(%s)", t.dirty, t.wantmore)
+	syslog.debugf ("dirty(%s) wantmore(%s)", t.dirty, t.wantmore)
 
 	if t.dirty and t.wantmore then
 		c:update ()
@@ -121,7 +121,7 @@ end
 
 local function aoi_add (list)
 	if not list then return end
-	logger.debugf ("aoihandler.aoi_add : \n%s", logger.dump (list))
+	syslog.debugf ("aoihandler.aoi_add : \n%s", syslog.dump (list))
 
 	local self = skynet.self ()
 	for _, target in pairs (list) do
@@ -134,7 +134,7 @@ end
 
 local function aoi_update (list, scope)
 	if not list then return end
-	logger.debugf ("aoihandler.aoi_update : \n%s", logger.dump (list))
+	syslog.debugf ("aoihandler.aoi_update : \n%s", syslog.dump (list))
 
 	self_flag[scope].dirty = true
 	send_self (scope)
@@ -149,7 +149,7 @@ end
 
 local function aoi_remove (list)
 	if not list then return end
-	logger.debugf ("aoihandler.aoi_remove : \n%s", logger.dump (list))
+	syslog.debugf ("aoihandler.aoi_remove : \n%s", syslog.dump (list))
 
 	local self = skynet.self ()
 	for _, agent in pairs (list) do
@@ -167,13 +167,13 @@ local function aoi_remove (list)
 end
 
 function CMD.aoi_subscribe (agent, reader)
-	logger.debugf ("aoi_subscribe agent(%d) reader(%s)", agent, reader)
+	syslog.debugf ("aoi_subscribe agent(%d) reader(%s)", agent, reader)
 	subscribe (agent, reader)
 	return create_reader ()
 end
 
 function CMD.aoi_unsubscribe (agent)
-	logger.debugf ("aoi_unsubscribe agent(%d)", agent)
+	syslog.debugf ("aoi_unsubscribe agent(%d)", agent)
 	local t = subscribe_agent[agent]
 	if t then
 		local id = t.character.id

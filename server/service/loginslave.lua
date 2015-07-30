@@ -1,7 +1,7 @@
 local skynet = require "skynet"
 local socket = require "socket"
 
-local logger = require "logger"
+local syslog = require "syslog"
 local protoloader = require "protoloader"
 local srp = require "srp"
 local aes = require "aes"
@@ -58,7 +58,7 @@ function CMD.auth (fd, addr)
 	connection[fd] = addr
 	skynet.timeout (auth_timeout, function ()
 		if connection[fd] == addr then
-			logger.warningf ("connection %d from %s auth timeout!", fd, addr)
+			syslog.warningf ("connection %d from %s auth timeout!", fd, addr)
 			close (fd)
 		end
 	end)
@@ -164,7 +164,7 @@ skynet.start (function ()
 	skynet.dispatch ("lua", function (_, _, command, ...)
 		local function pret (ok, ...)
 			if not ok then 
-				logger.warningf (...)
+				syslog.warningf (...)
 				skynet.ret ()
 			else
 				skynet.retpack (...)

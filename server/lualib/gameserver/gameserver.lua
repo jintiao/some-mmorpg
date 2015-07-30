@@ -1,7 +1,7 @@
 local skynet = require "skynet"
 
 local gateserver = require "gameserver.gateserver"
-local logger = require "logger"
+local syslog = require "syslog"
 local protoloader = require "protoloader"
 
 
@@ -26,12 +26,12 @@ function gameserver.start (gamed)
 	end
 
 	function handler.connect (fd, addr)
-		logger.logf ("connect from %s (fd = %d)", addr, fd)
+		syslog.noticef ("connect from %s (fd = %d)", addr, fd)
 		gateserver.open_client (fd)
 	end
 
 	function handler.disconnect (fd)
-		logger.logf ("fd (%d) disconnected", fd)
+		syslog.noticef ("fd (%d) disconnected", fd)
 	end
 
 	local function do_login (fd, msg, sz)
@@ -55,15 +55,15 @@ function gameserver.start (gamed)
 
 			local ok, account = xpcall (do_login, traceback, fd, msg, sz)
 			if ok then
-				logger.logf ("account %d login success", account)
+				syslog.noticef ("account %d login success", account)
 				local agent = gamed.login_handler (fd, account)
 				queue = pending_msg[fd]
 				for _, t in pairs (queue) do
-					logger.logf ("forward pending message to agent %d", agent)
+					syslog.noticef ("forward pending message to agent %d", agent)
 					skynet.rawcall(agent, "client", t.msg, t.sz)
 				end
 			else
-				logger.warningf ("%s login failed : %s", addr, account)
+				syslog.warningf ("%s login failed : %s", addr, account)
 				gateserver.close_client (fd)
 			end
 
@@ -78,7 +78,7 @@ function gameserver.start (gamed)
 		login_token[id] = secret
 		skynet.timeout (10 * 100, function ()
 			if login_token[id] == secret then
-				logger.logf ("account %d token timeout", id)
+				syslog.noticef ("account %d token timeout", id)
 				login_token[id] = nil
 			end
 		end)

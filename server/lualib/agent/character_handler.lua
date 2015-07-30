@@ -1,7 +1,7 @@
 local skynet = require "skynet"
 local sharedata = require "sharedata"
 
-local logger = require "logger"
+local syslog = require "syslog"
 local dbpacker = require "db.packer"
 local handler = require "agent.handler"
 

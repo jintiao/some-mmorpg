@@ -1,6 +1,6 @@
 local skynet = require "skynet"
 local sharedata = require "sharedata"
-local logger = require "logger"
+local syslog = require "syslog"
 local mapdata = require "gddata.map"
 
 local CMD = {}
@@ -17,12 +17,12 @@ end
 
 function CMD.character_enter (agent, character)
 	if online_character[character] ~= nil then
-		logger.log (string.format ("multiple login detected, character %d", character))
+		syslog.notice (string.format ("multiple login detected, character %d", character))
 		CMD.kick (character)
 	end
 
 	online_character[character] = agent
-	logger.log (string.format ("character(%d) enter world", character))
+	syslog.notice (string.format ("character(%d) enter world", character))
 	local map, pos = skynet.call (agent, "lua", "world_enter", skynet.self ())
 		
 	local m = map_instance[map]
@@ -35,7 +35,7 @@ function CMD.character_enter (agent, character)
 end
 
 function CMD.character_leave (agent, character)
-	logger.log (string.format ("character(%d) leave world", character))
+	syslog.notice (string.format ("character(%d) leave world", character))
 	online_character[character] = nil
 end
 
