@@ -121,7 +121,6 @@ end
 
 local function aoi_add (list)
 	if not list then return end
-	syslog.debugf ("aoihandler.aoi_add : \n%s", syslog.dump (list))
 
 	local self = skynet.self ()
 	for _, target in pairs (list) do
@@ -134,7 +133,6 @@ end
 
 local function aoi_update (list, scope)
 	if not list then return end
-	syslog.debugf ("aoihandler.aoi_update : \n%s", syslog.dump (list))
 
 	self_flag[scope].dirty = true
 	send_self (scope)
@@ -149,7 +147,6 @@ end
 
 local function aoi_remove (list)
 	if not list then return end
-	syslog.debugf ("aoihandler.aoi_remove : \n%s", syslog.dump (list))
 
 	local self = skynet.self ()
 	for _, agent in pairs (list) do

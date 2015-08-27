@@ -2,8 +2,8 @@ skynet_root = "../3rd/skynet/"
 root = "./"
 common = "../common/"
 thread = 8
-logger = "$SERVER_NAME"
-logservice = "syslog"
+-- logger = "$SERVER_NAME"
+-- logservice = "syslog"
 harbor = 0
 start = "main"	-- main script
 bootstrap = "snlua bootstrap"	-- The service for bootstrap
@@ -16,6 +16,6 @@ lualoader = skynet_root.."lualib/loader.lua"
 snax = skynet_root.."?.lua;"
 
 if "$OS" == "Linux" then 
-	daemon = root .. "$SERVER_NAME" .. ".pid"
+--	daemon = root .. "$SERVER_NAME" .. ".pid"
 end
 

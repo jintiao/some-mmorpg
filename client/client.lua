@@ -130,7 +130,7 @@ function RESPONSE:handshake (args)
 		print (name, constant.default_password)
 		local key = srp.create_client_session_key (name, constant.default_password, args.salt, user.private_key, user.public_key, args.server_pub)
 		user.session_key = key
-		local ret = { challenge = aes.encrypt (challenge, key), password = aes.encrypt (user.password, key) }
+		local ret = { challenge = aes.encrypt (args.challenge, key), password = aes.encrypt (user.password, key) }
 		send_request ("auth", ret)
 	end
 end
@@ -162,6 +162,7 @@ local function handle_response (id, args)
 	local s = assert (session[id])
 	session[id] = nil
 	local f = RESPONSE[s.name]
+	print ("response type : " .. type (args))
 	if f then
 		f (s.args, args)
 	else

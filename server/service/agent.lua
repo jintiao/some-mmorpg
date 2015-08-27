@@ -68,7 +68,6 @@ local REQUEST
 local function handle_request (name, args, response)
 	local f = REQUEST[name]
 	if f then
-		syslog.debugf ("REQUEST(%s)\n%s", name, syslog.dump (args))
 		local ok, ret = xpcall (f, traceback, args)
 		if not ok then
 			syslog.warningf ("handle message(%s) failed : %s", name, ret) 
@@ -76,7 +75,6 @@ local function handle_request (name, args, response)
 		else
 			last_heartbeat_time = skynet.now ()
 			if response and ret then
-				syslog.debugf ("RESPONSE(%s)\n%s", name, syslog.dump (ret))
 				send_msg (user_fd, response (ret))
 			end
 		end
@@ -101,8 +99,6 @@ local function handle_response (id, args)
 		kick_self ()
 		return
 	end
-
-	syslog.debugf ("handle response(%s)\n%s", s.name, syslog.dump (args))
 
 	local ok, ret = xpcall (f, traceback, s.args, args)
 	if not ok then
