@@ -96,7 +96,7 @@ function CMD.auth (fd, addr)
 		if not id then
 			assert (args.password)
 			local password = aes.decrypt (args.password, session_key)
-			id = skynet.call (database, "lua", "account", "create", realname, password) or error ()
+			id = skynet.call (database, "lua", "account", "create", args.name, password) or error ()
 		end
 		
 		challenge = srp.random ()
