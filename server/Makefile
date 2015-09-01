@@ -26,7 +26,7 @@ LUA_INC ?= $(SKYNET_ROOT)3rd/lua
 # skynet
 
 MCSERVICE = syslog
-LUA_CLIB = srp aes cjson
+LUA_CLIB = srp aes cjson uuid
 
 all : \
   $(foreach v, $(MCSERVICE), $(MCSERVICE_PATH)/$(v).so) \
@@ -45,6 +45,9 @@ $(LUA_CLIB_PATH)/srp.so : lualib-src/lua-srp.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ $(OPENSSL_FLAG) -o $@ 
 
 $(LUA_CLIB_PATH)/aes.so : lualib-src/lua-aes.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ $(OPENSSL_FLAG) -o $@ 
+
+$(LUA_CLIB_PATH)/uuid.so : lualib-src/lua-uuid.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ $(OPENSSL_FLAG) -o $@ 
 
 $(LUA_CLIB_PATH)/cjson.so : | $(LUA_CLIB_PATH)
