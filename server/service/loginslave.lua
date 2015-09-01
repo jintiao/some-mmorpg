@@ -5,6 +5,7 @@ local syslog = require "syslog"
 local protoloader = require "protoloader"
 local srp = require "srp"
 local aes = require "aes"
+local uuid = require "uuid"
 
 local traceback = debug.traceback
 
@@ -70,9 +71,9 @@ function CMD.auth (fd, addr)
 	assert (type == "REQUEST")
 
 	if name == "handshake" then
-		assert (args and args.name and args.client_pub)
+		assert (args and args.name and args.client_pub, "invalid handshake request")
 
-		local account = skynet.call (database, "lua", "account", "load", args.name) or error ()
+		local account = skynet.call (database, "lua", "account", "load", args.name) or error ("load account " .. args.name .. " failed")
 
 		local session_key, _, pkey = srp.create_server_session_key (account.verifier, args.client_pub)
 		local challenge = srp.random ()
@@ -85,18 +86,17 @@ function CMD.auth (fd, addr)
 		send_msg (fd, msg)
 
 		type, name, args, response = read_msg (fd)
-		assert (type == "REQUEST")
-		assert (name == "auth")
-		assert (args and args.challenge)
+		assert (type == "REQUEST" and name == "auth" and args and args.challenge, "invalid auth request")
 
 		local text = aes.decrypt (args.challenge, session_key)
-		assert (challenge == text)
+		assert (challenge == text, "auth challenge failed")
 
 		local id = tonumber (account.id)
 		if not id then
 			assert (args.password)
+			id = uuid.gen ()
 			local password = aes.decrypt (args.password, session_key)
-			id = skynet.call (database, "lua", "account", "create", args.name, password) or error ()
+			account.id = skynet.call (database, "lua", "account", "create", id, account.name, password) or error (string.format ("create account %s/%d failed", args.name, id))
 		end
 		
 		challenge = srp.random ()

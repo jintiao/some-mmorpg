@@ -207,6 +207,7 @@ local function handle_cmd (line)
 		cmd = s
 		return ""
 	end, 1)
+	print (cmd, "====", p)
 
 	if string.lower (cmd) == "help" then
 		for k, v in pairs (HELP) do
@@ -216,14 +217,19 @@ local function handle_cmd (line)
 	end
 
 	local t = {}
-	local f = load (p, "=" .. cmd, "t", t)
-	if f then
-		f ()
+	local f, err = load (p, "=(load)" , "t", t)
+
+	if not f then error (err) end
+	f ()
+
+	print ("cmd", cmd)
+	if t then
+		print_r (t)
+	else
+		print ("null argument")
 	end
 
-	if not next (t) then
-		t = nil
-	end
+	if not next (t) then t = nil end
 
 	if cmd then
 		local ok, err = pcall (send_request, cmd, t)

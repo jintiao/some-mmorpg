@@ -4,6 +4,7 @@ local sharedata = require "sharedata"
 local syslog = require "syslog"
 local dbpacker = require "db.packer"
 local handler = require "agent.handler"
+local uuid = require "uuid"
 
 
 local REQUEST = {}
@@ -30,8 +31,10 @@ local function load_list (account)
 end
 
 local function check_character (account, id)
+	print ("check_character", account, id)
 	local list = load_list (account)
 	for _, v in pairs (list) do
+		print ("list", v)
 		if v == id then return true end
 	end
 	return false
@@ -76,10 +79,11 @@ local function create (name, race, class)
 end
 
 function REQUEST.character_create (args)
-	local c = args.character or error ()
+	for k, v in pairs (args) do print (k, v) end
+	local c = args.character or error ("invalid argument")
 
 	local character = create (c.name, c.race, c.class)
-	local id = skynet.call (database, "lua", "character", "reserve", c.name)
+	local id = skynet.call (database, "lua", "character", "reserve", uuid.gen (), c.name)
 	if not id then return {} end
 
 	character.id = id

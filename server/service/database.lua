@@ -34,14 +34,11 @@ function connection_handler (key)
 	return group[hash % ngroup + 1]
 end
 
-function id_handler ()
-	return center:incr ("uniqueid")
-end
 
 local MODULE = {}
 local function module_init (name, mod)
 	MODULE[name] = mod
-	mod.init (connection_handler, id_handler)
+	mod.init (connection_handler)
 end
 
 local traceback = debug.traceback

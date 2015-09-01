@@ -4,11 +4,9 @@ local srp = require "srp"
 
 local account = {}
 local connection_handler
-local id_handler
 
-function account.init (ch, ih)
+function account.init (ch)
 	connection_handler = ch
-	id_handler = ih
 end
 
 local function make_key (name)
@@ -32,15 +30,14 @@ function account.load (name)
 	return acc
 end
 
-function account.create (name, password)
-	assert (name and #name < 24 and password and #password < 24)
+function account.create (id, name, password)
+	assert (id and name and #name < 24 and password and #password < 24, "invalid argument")
 	
-	local id = id_handler ()
 	local connection, key = make_key (name)
-	assert (connection:hsetnx (key, "account", id) ~= 0)
+	assert (connection:hsetnx (key, "account", id) ~= 0, "create account failed")
 
 	local salt, verifier = srp.create_verifier (name, password)
-	assert (connection:hmset (key, "salt", salt, "verifier", verifier) ~= 0)
+	assert (connection:hmset (key, "salt", salt, "verifier", verifier) ~= 0, "save account verifier failed")
 
 	return id
 end

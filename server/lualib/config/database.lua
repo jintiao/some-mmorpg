@@ -8,7 +8,7 @@ local center = {
 	db = db,
 }
 
-local ngroup = 32
+local ngroup = 1
 local group = {}
 for i = 1, ngroup do
 	table.insert (group, { host = host, port = port + i, db = db })
